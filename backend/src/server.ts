@@ -75,7 +75,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // Start server
 const PORT = config.port;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     logger.info(`🚀 CAPS360 API server running on port ${PORT}`);
     logger.info(`Environment: ${config.nodeEnv}`);
     logger.info(`GCP Project: ${config.gcp.projectId}`);
