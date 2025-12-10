@@ -39,7 +39,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Health check endpoint (for Cloud Run)
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
@@ -51,13 +51,13 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/content', contentRoutes);
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
     res.status(404).json({ error: 'Not found' });
 });
 
 // Error handling
 app.use(errorLogger);
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     logger.error('Unhandled error:', err);
     res.status(500).json({
         error: config.nodeEnv === 'production' ? 'Internal server error' : err.message,

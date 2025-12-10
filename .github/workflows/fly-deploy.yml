@@ -1,0 +1,31 @@
+name: Deploy to Fly.io
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install flyctl
+        uses: superfly/flyctl-actions@v1
+        with:
+          version: 'stable'
+
+      - name: Deploy backend to Fly
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy -a caps360-backend --config fly-backend.toml
+
+      - name: Deploy frontend to Fly
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy -a caps360-frontend --config fly-frontend.toml

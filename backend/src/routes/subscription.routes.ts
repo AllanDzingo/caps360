@@ -1,7 +1,6 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import subscriptionService from '../services/subscription.service';
-import paymentService from '../services/payment.service';
 import analyticsService from '../services/analytics.service';
 import { AnalyticsEventType } from '../models/analytics.model';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
@@ -13,7 +12,7 @@ const router = Router();
  * POST /api/subscriptions/trial/start
  * Start free trial
  */
-router.post('/trial/start', authenticate, async (req: AuthRequest, res) => {
+router.post('/trial/start', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         if (!req.userId) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -47,7 +46,7 @@ router.post(
         body('paystackSubscriptionId').notEmpty(),
         body('paystackCustomerCode').notEmpty(),
     ],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -120,7 +119,7 @@ router.post(
  * POST /api/subscriptions/cancel
  * Cancel subscription
  */
-router.post('/cancel', authenticate, async (req: AuthRequest, res) => {
+router.post('/cancel', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         if (!req.userId) {
             return res.status(401).json({ error: 'Unauthorized' });

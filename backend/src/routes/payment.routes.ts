@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import paymentService from '../services/payment.service';
-import subscriptionService from '../services/subscription.service';
 import analyticsService from '../services/analytics.service';
 import { AnalyticsEventType } from '../models/analytics.model';
 import { webhookLimiter } from '../middleware/rate-limit.middleware';
@@ -63,9 +62,11 @@ router.post('/payfast/webhook', webhookLimiter, async (req: Request, res: Respon
         }
 
         res.status(200).send('OK');
+        return;
     } catch (error) {
         logger.error('PayFast webhook error:', error);
         res.status(500).send('Webhook processing error');
+        return;
     }
 });
 
@@ -130,9 +131,11 @@ router.post('/paystack/webhook', webhookLimiter, async (req: Request, res: Respo
         }
 
         res.status(200).send('OK');
+        return;
     } catch (error) {
         logger.error('Paystack webhook error:', error);
         res.status(500).send('Webhook processing error');
+        return;
     }
 });
 

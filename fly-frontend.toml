@@ -1,0 +1,14 @@
+# Fly.io config template for frontend
+app = "caps360-frontend"
+primary_region = "iad"
+
+[build]
+  # Using Dockerfile in frontend-web
+  dockerfile = "frontend-web/Dockerfile"
+
+[[services]]
+  internal_port = 80
+  protocol = "tcp"
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80

@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { body, query, validationResult } from 'express-validator';
+import { Router, Response } from 'express';
+import { body, validationResult } from 'express-validator';
 import aiService from '../services/ai.service';
 import analyticsService from '../services/analytics.service';
 import { AnalyticsEventType } from '../models/analytics.model';
@@ -19,7 +19,7 @@ router.post(
     requireFeature('ai_tutor'),
     aiLimiter,
     [body('message').trim().notEmpty()],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -63,7 +63,7 @@ router.post(
         body('subject').trim().notEmpty(),
         body('numQuestions').optional().isInt({ min: 5, max: 20 }),
     ],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {

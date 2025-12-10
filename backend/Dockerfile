@@ -8,8 +8,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (use npm install so build works without package-lock.json)
+RUN npm install --silent
 
 # Copy source code
 COPY src ./src
@@ -27,7 +27,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm install --production --silent
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist

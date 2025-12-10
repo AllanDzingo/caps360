@@ -27,7 +27,7 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
 export const errorLogger = (
     error: Error,
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction
 ): void => {
     logger.error({

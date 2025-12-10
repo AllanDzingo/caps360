@@ -148,7 +148,8 @@ export class AuthService {
      * Generate JWT token
      */
     private generateToken(userId: string): string {
-        return jwt.sign({ userId }, config.jwt.secret, {
+        const secret = config.jwt.secret as string;
+        return jwt.sign({ userId }, secret, {
             expiresIn: config.jwt.expiresIn,
         });
     }
@@ -158,7 +159,8 @@ export class AuthService {
      */
     verifyToken(token: string): { userId: string } {
         try {
-            const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+            const secret = config.jwt.secret as string;
+            const decoded = jwt.verify(token, secret) as { userId: string };
             return decoded;
         } catch (error) {
             throw new Error('Invalid or expired token');

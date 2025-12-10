@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { query, validationResult } from 'express-validator';
 import contentService from '../services/content.service';
 import analyticsService from '../services/analytics.service';
@@ -18,7 +18,7 @@ router.get(
         query('grade').optional().isInt({ min: 1, max: 12 }),
         query('subject').optional().trim(),
     ],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -41,7 +41,7 @@ router.get(
  * GET /api/content/courses/:courseId
  * Get course by ID
  */
-router.get('/courses/:courseId', authenticate, async (req: AuthRequest, res) => {
+router.get('/courses/:courseId', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const course = await contentService.getCourseById(req.params.courseId);
 
@@ -50,8 +50,10 @@ router.get('/courses/:courseId', authenticate, async (req: AuthRequest, res) => 
         }
 
         res.json(course);
+        return;
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+        return;
     }
 });
 
@@ -59,13 +61,15 @@ router.get('/courses/:courseId', authenticate, async (req: AuthRequest, res) => 
  * GET /api/content/courses/:courseId/lessons
  * Get lessons for a course
  */
-router.get('/courses/:courseId/lessons', authenticate, async (req: AuthRequest, res) => {
+router.get('/courses/:courseId/lessons', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         const lessons = await contentService.getLessonsByCourse(req.params.courseId);
 
         res.json(lessons);
+        return;
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+        return;
     }
 });
 
@@ -73,7 +77,7 @@ router.get('/courses/:courseId/lessons', authenticate, async (req: AuthRequest, 
  * GET /api/content/lessons/:lessonId
  * Get lesson by ID with signed URLs
  */
-router.get('/lessons/:lessonId', authenticate, async (req: AuthRequest, res) => {
+router.get('/lessons/:lessonId', authenticate, async (req: AuthRequest, res: Response) => {
     try {
         if (!req.userId) {
             return res.status(401).json({ error: 'Unauthorized' });
