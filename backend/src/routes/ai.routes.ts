@@ -188,8 +188,10 @@ router.post(
             );
 
             res.json({ lessonPlan });
+            return;
         } catch (error: any) {
             res.status(500).json({ error: error.message });
+            return;
         }
     }
 );

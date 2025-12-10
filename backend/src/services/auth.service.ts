@@ -148,10 +148,9 @@ export class AuthService {
      */
     private generateToken(userId: string): string {
         const secret = config.jwt.secret as string;
-        const options: SignOptions = {
+        return jwt.sign({ userId }, secret, {
             expiresIn: config.jwt.expiresIn,
-        };
-        return jwt.sign({ userId }, secret, options);
+        } as any);
     }
 
     /**
