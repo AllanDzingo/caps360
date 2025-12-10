@@ -37,7 +37,7 @@ jobs:
           npm audit --audit-level=high --json > audit-results.json || true
 
       - name: Upload audit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: audit-${{ matrix.directory }}
           path: ${{ matrix.directory }}/audit-results.json
