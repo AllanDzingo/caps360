@@ -5,7 +5,7 @@ import { getFirestore, Collections } from '../config/firestore';
 import config from '../config';
 import logger from '../config/logger';
 import { AIConversation, AIMessage } from '../models/analytics.model';
-import { Quiz, QuizQuestion } from '../models/content.model';
+import { Quiz } from '../models/content.model';
 
 export class AIService {
     private genAI: GoogleGenerativeAI;

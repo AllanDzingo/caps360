@@ -29,8 +29,10 @@ router.post('/trial/start', authenticate, async (req: AuthRequest, res: Response
         );
 
         res.json({ message: 'Free trial started', trialDays: 14 });
+        return;
     } catch (error: any) {
         res.status(400).json({ error: error.message });
+        return;
     }
 });
 
@@ -73,8 +75,10 @@ router.post(
             );
 
             res.json({ subscription, welcomePremiumDays: 14 });
+            return;
         } catch (error: any) {
             res.status(400).json({ error: error.message });
+            return;
         }
     }
 );
@@ -87,7 +91,7 @@ router.post(
     '/upgrade',
     authenticate,
     [body('tier').isIn(Object.values(SubscriptionTier))],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -109,8 +113,10 @@ router.post(
             );
 
             res.json({ message: 'Subscription upgraded' });
+            return;
         } catch (error: any) {
             res.status(400).json({ error: error.message });
+            return;
         }
     }
 );
@@ -136,8 +142,10 @@ router.post('/cancel', authenticate, async (req: AuthRequest, res: Response) => 
         );
 
         res.json({ message: 'Subscription cancelled' });
+        return;
     } catch (error: any) {
         res.status(400).json({ error: error.message });
+        return;
     }
 });
 

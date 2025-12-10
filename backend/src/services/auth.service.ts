@@ -6,7 +6,6 @@ import config from '../config';
 import logger from '../config/logger';
 import {
     User,
-    UserRole,
     SubscriptionTier,
     CreateUserDTO,
     LoginDTO,

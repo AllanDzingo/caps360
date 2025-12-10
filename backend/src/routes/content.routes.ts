@@ -112,8 +112,10 @@ router.get('/lessons/:lessonId', authenticate, async (req: AuthRequest, res: Res
         );
 
         res.json(lesson);
+        return;
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+        return;
     }
 });
 
