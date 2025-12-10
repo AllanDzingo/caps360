@@ -193,39 +193,31 @@ Write-Host ""
 Write-Host "4. Update Gemini API Key:" -ForegroundColor Yellow
 Write-Host "   echo 'your-actual-key' | gcloud secrets versions add gemini-api-key --data-file=-" -ForegroundColor White
 Write-Host ""
-Write-Host "⚠️  NOTE: Payment features are disabled in testing mode" -ForegroundColor Red
+Write-Host "NOTE: Payment features are disabled in testing mode" -ForegroundColor Red
 Write-Host ""
-Write-Host "🎉 Deployment successful! Visit $FRONTEND_URL to see your platform!" -ForegroundColor Green
+Write-Host "Deployment successful! Visit $FRONTEND_URL to see your platform!" -ForegroundColor Green
 Write-Host ""
 
 # Save deployment info
-$deploymentInfo = @"
-CAPS360 Deployment Information
-Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+$deploymentInfo = "CAPS360 Deployment Information`r`n"
+$deploymentInfo += "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`r`n`r`n"
+$deploymentInfo += "URLs`r`n"
+$deploymentInfo += "Backend API: $BACKEND_URL`r`n"
+$deploymentInfo += "Frontend Web: $FRONTEND_URL`r`n`r`n"
+$deploymentInfo += "Project`r`n"
+$deploymentInfo += "GCP Project ID: $PROJECT_ID`r`n"
+$deploymentInfo += "Region: africa-south1`r`n`r`n"
+$deploymentInfo += "Status`r`n"
+$deploymentInfo += "Payment: Disabled (Testing Mode)`r`n"
+$deploymentInfo += "Backend: Deployed`r`n"
+$deploymentInfo += "Frontend: Deployed`r`n`r`n"
+$deploymentInfo += "Admin Setup`r`n"
+$deploymentInfo += "Run: .\scripts\create-admin-user.ps1`r`n`r`n"
+$deploymentInfo += "Logs`r`n"
+$deploymentInfo += "Backend: gcloud run logs read caps360-api --region africa-south1 --limit 50`r`n`r`n"
+$deploymentInfo += "Update Secrets`r`n"
+$deploymentInfo += "gcloud secrets versions add SECRET_NAME --data-file=-`r`n"
 
-URLs
-Backend API: $BACKEND_URL
-Frontend Web: $FRONTEND_URL
-
-Project
-GCP Project ID: $PROJECT_ID
-Region: africa-south1
-
-Status
-Payment: Disabled (Testing Mode)
-Backend: Deployed
-Frontend: Deployed
-
-Admin Setup
-Run: .\scripts\create-admin-user.ps1
-
-Logs
-Backend: gcloud run logs read caps360-api --region africa-south1 --limit 50
-
-Update Secrets
-gcloud secrets versions add SECRET_NAME --data-file=-
-"@
-
-Set-Content "DEPLOYMENT.md" $deploymentInfo
+Set-Content "DEPLOYMENT.md" -Value $deploymentInfo
 Write-Host "Deployment info saved to DEPLOYMENT.md" -ForegroundColor Gray
 Write-Host ""
