@@ -146,7 +146,7 @@ npx expo start
 ```
 PORT=8080
 NODE_ENV=development
-GCP_PROJECT_ID=your-project-id
+GCP_PROJECT_ID=caps360
 FIRESTORE_EMULATOR_HOST=localhost:8080 # for local dev
 GEMINI_API_KEY=your-gemini-api-key
 PAYFAST_MERCHANT_ID=your-payfast-merchant-id

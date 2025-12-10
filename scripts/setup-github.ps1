@@ -60,7 +60,7 @@ Write-Host "📝 Updating configuration files..." -ForegroundColor Yellow
 
 # Update .firebaserc
 $firebaserc = Get-Content ".firebaserc" -Raw
-$firebaserc = $firebaserc -replace "YOUR_PROJECT_ID", "your-gcp-project-id"
+$firebaserc = $firebaserc -replace "YOUR_PROJECT_ID", "caps360"
 Set-Content ".firebaserc" $firebaserc
 Write-Host "   Updated .firebaserc" -ForegroundColor Gray
 

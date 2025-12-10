@@ -186,14 +186,14 @@ This will:
 
 **GCP_PROJECT_ID:**
 ```
-your-gcp-project-id
+caps360
 ```
 
 **GCP_SA_KEY:**
 ```json
 {
   "type": "service_account",
-  "project_id": "your-project-id",
+  "project_id": "caps360",
   ...
 }
 ```
@@ -228,7 +228,7 @@ Replace `YOUR_PROJECT_ID` with your actual GCP project ID:
 ```json
 {
   "projects": {
-    "default": "your-actual-project-id"
+    "default": "caps360"
   }
 }
 ```
@@ -243,7 +243,7 @@ Create secrets in GCP Secret Manager:
 
 ```powershell
 # Set your project
-gcloud config set project YOUR_PROJECT_ID
+gcloud config set project caps360
 
 # Create secrets
 echo -n "your-jwt-secret" | gcloud secrets create jwt-secret --data-file=-

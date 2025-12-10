@@ -32,25 +32,25 @@ gcloud iam service-accounts create github-actions \
   --display-name="GitHub Actions"
 
 # Grant necessary permissions
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding caps360 \
+  --member="serviceAccount:github-actions@caps360.iam.gserviceaccount.com" \
   --role="roles/run.admin"
 
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding caps360 \
+  --member="serviceAccount:github-actions@caps360.iam.gserviceaccount.com" \
   --role="roles/storage.admin"
 
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding caps360 \
+  --member="serviceAccount:github-actions@caps360.iam.gserviceaccount.com" \
   --role="roles/cloudfunctions.admin"
 
-gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
-  --member="serviceAccount:github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding caps360 \
+  --member="serviceAccount:github-actions@caps360.iam.gserviceaccount.com" \
   --role="roles/iam.serviceAccountUser"
 
 # Create and download key
 gcloud iam service-accounts keys create github-sa-key.json \
-  --iam-account=github-actions@YOUR_PROJECT_ID.iam.gserviceaccount.com
+  --iam-account=github-actions@caps360.iam.gserviceaccount.com
 
 # Copy the entire contents of github-sa-key.json
 cat github-sa-key.json

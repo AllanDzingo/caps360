@@ -1,9 +1,9 @@
 {
   "projects": {
-    "default": "YOUR_PROJECT_ID"
+    "default": "caps360"
   },
   "targets": {
-    "YOUR_PROJECT_ID": {
+    "caps360": {
       "hosting": {
         "caps360-web": [
           "caps360-web"
