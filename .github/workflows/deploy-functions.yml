@@ -1,0 +1,71 @@
+name: Deploy Cloud Functions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/**'
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+
+jobs:
+  deploy-functions:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Trial Expiry Checker
+        working-directory: ./functions/trial-expiry-checker
+        run: |
+          gcloud functions deploy trial-expiry-checker \
+            --runtime nodejs18 \
+            --trigger-topic trial-expiry-check \
+            --region $REGION \
+            --set-env-vars="GCP_PROJECT_ID=$PROJECT_ID"
+
+      - name: Deploy Welcome Premium Expiry
+        working-directory: ./functions/welcome-premium-expiry
+        run: |
+          gcloud functions deploy welcome-premium-expiry \
+            --runtime nodejs18 \
+            --trigger-topic welcome-premium-expiry-check \
+            --region $REGION \
+            --set-env-vars="GCP_PROJECT_ID=$PROJECT_ID"
+
+      - name: Deploy PayFast Webhook
+        working-directory: ./functions/payfast-webhook
+        run: |
+          gcloud functions deploy payfast-webhook \
+            --runtime nodejs18 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region $REGION \
+            --set-secrets="PAYFAST_PASSPHRASE=payfast-passphrase:latest"
+
+      - name: Deploy Paystack Webhook
+        working-directory: ./functions/paystack-webhook
+        run: |
+          gcloud functions deploy paystack-webhook \
+            --runtime nodejs18 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region $REGION \
+            --set-secrets="PAYSTACK_SECRET_KEY=paystack-secret-key:latest"
