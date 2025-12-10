@@ -41,8 +41,10 @@ router.post(
             );
 
             res.status(201).json(result);
+            return;
         } catch (error: any) {
             res.status(400).json({ error: error.message });
+            return;
         }
     }
 );
@@ -77,8 +79,10 @@ router.post(
             );
 
             res.json(result);
+            return;
         } catch (error: any) {
-            res.status(401).json({ error: error.message });
+            res.status(400).json({ error: error.message });
+            return;
         }
     }
 );

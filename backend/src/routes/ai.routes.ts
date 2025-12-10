@@ -43,8 +43,10 @@ router.post(
             );
 
             res.json(result);
+            return;
         } catch (error: any) {
             res.status(500).json({ error: error.message });
+            return;
         }
     }
 );
@@ -93,8 +95,10 @@ router.post(
             );
 
             res.json(quiz);
+            return;
         } catch (error: any) {
             res.status(500).json({ error: error.message });
+            return;
         }
     }
 );
@@ -113,7 +117,7 @@ router.post(
         body('rubric').trim().notEmpty(),
         body('maxScore').isInt({ min: 1 }),
     ],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -137,8 +141,10 @@ router.post(
             );
 
             res.json(grading);
+            return;
         } catch (error: any) {
             res.status(500).json({ error: error.message });
+            return;
         }
     }
 );
@@ -158,7 +164,7 @@ router.post(
         body('topic').trim().notEmpty(),
         body('duration').isInt({ min: 30, max: 180 }),
     ],
-    async (req: AuthRequest, res) => {
+    async (req: AuthRequest, res: Response) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {

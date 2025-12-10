@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { getFirestore, Collections } from '../config/firestore';
 import config from '../config';
@@ -148,9 +148,10 @@ export class AuthService {
      */
     private generateToken(userId: string): string {
         const secret = config.jwt.secret as string;
-        return jwt.sign({ userId }, secret, {
+        const options: SignOptions = {
             expiresIn: config.jwt.expiresIn,
-        });
+        };
+        return jwt.sign({ userId }, secret, options);
     }
 
     /**

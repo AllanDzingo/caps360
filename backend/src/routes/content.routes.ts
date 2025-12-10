@@ -31,8 +31,10 @@ router.get(
             const courses = await contentService.getCourses(grade, subject);
 
             res.json(courses);
+            return;
         } catch (error: any) {
             res.status(500).json({ error: error.message });
+            return;
         }
     }
 );

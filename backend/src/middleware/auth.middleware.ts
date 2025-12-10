@@ -12,7 +12,7 @@ export interface AuthRequest extends Request {
  */
 export const authenticate = async (
     req: AuthRequest,
-    _res: Response,
+    res: Response,
     next: NextFunction
 ): Promise<void> => {
     try {
@@ -52,7 +52,7 @@ export const authenticate = async (
  */
 export const optionalAuth = async (
     req: AuthRequest,
-    _res: Response,
+    res: Response,
     next: NextFunction
 ): Promise<void> => {
     try {
