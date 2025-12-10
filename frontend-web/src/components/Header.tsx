@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
-import { User, LogOut, Menu } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export const Header: React.FC = () => {
     const { user, isAuthenticated, logout } = useAuthStore();
