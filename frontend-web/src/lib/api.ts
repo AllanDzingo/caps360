@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// @ts-ignore
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+// Prefer runtime-injected env (window.__env) if present, else fall back to compile-time Vite env
+const runtimeEnv = (window as any).__env;
+const API_URL = runtimeEnv?.VITE_API_URL || (import.meta.env as any).VITE_API_URL || 'http://localhost:8080';
 
 export const api = axios.create({
     baseURL: `${API_URL}/api`,

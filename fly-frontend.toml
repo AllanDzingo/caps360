@@ -3,12 +3,18 @@ app = "caps360-frontend"
 primary_region = "iad"
 
 [build]
-  # Using Dockerfile in frontend-web
   dockerfile = "frontend-web/Dockerfile"
 
-[[services]]
+[http_service]
   internal_port = 80
-  protocol = "tcp"
-  [[services.ports]]
-    handlers = ["http"]
-    port = 80
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/health"
