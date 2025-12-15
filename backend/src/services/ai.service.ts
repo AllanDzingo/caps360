@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import NodeCache from 'node-cache';
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, Collections } from '../config/firestore';
+import { supabase, Tables } from '../config/supabase';
 import config from '../config';
 import logger from '../config/logger';
 import { AIConversation, AIMessage } from '../models/analytics.model';
@@ -11,7 +11,6 @@ export class AIService {
     private genAI: GoogleGenerativeAI;
     private model: any;
     private cache: NodeCache;
-    private db = getFirestore();
 
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.ai.geminiApiKey);
@@ -34,9 +33,14 @@ export class AIService {
 
             if (conversationId) {
                 // Load existing conversation
-                const doc = await this.db.collection(Collections.AI_CONVERSATIONS).doc(conversationId).get();
-                if (doc.exists) {
-                    conversation = doc.data() as AIConversation;
+                const { data, error } = await supabase
+                    .from(Tables.AI_CONVERSATIONS)
+                    .select('*')
+                    .eq('id', conversationId)
+                    .single();
+
+                if (data) {
+                    conversation = this.mapDbConversationToModel(data);
                 } else {
                     conversation = this.createNewConversation(userId);
                 }
@@ -83,8 +87,22 @@ export class AIService {
             conversation.messages.push(userMessage, assistantMessage);
             conversation.updatedAt = new Date();
 
-            // Save conversation
-            await this.db.collection(Collections.AI_CONVERSATIONS).doc(conversation.id).set(conversation);
+            // Save conversation (Upsert)
+            const dbConversation = {
+                id: conversation.id,
+                user_id: conversation.userId,
+                messages: conversation.messages, // Assuming Supabase handles JSONB
+                created_at: conversation.createdAt.toISOString(),
+                updated_at: conversation.updatedAt.toISOString(),
+            };
+
+            const { error: saveError } = await supabase
+                .from(Tables.AI_CONVERSATIONS)
+                .upsert(dbConversation);
+
+            if (saveError) {
+                throw new Error(`Supabase error: ${saveError.message}`);
+            }
 
             logger.info(`AI chat: user ${userId}, conversation ${conversation.id}`);
 
@@ -96,6 +114,16 @@ export class AIService {
             logger.error('AI chat error:', error);
             throw error;
         }
+    }
+
+    private mapDbConversationToModel(dbConv: any): AIConversation {
+        return {
+            id: dbConv.id,
+            userId: dbConv.user_id,
+            messages: dbConv.messages || [],
+            createdAt: new Date(dbConv.created_at),
+            updatedAt: new Date(dbConv.updated_at),
+        };
     }
 
     /**
@@ -181,8 +209,25 @@ Return the quiz in the following JSON format:
                 updatedAt: new Date(),
             };
 
-            // Save to Firestore
-            await this.db.collection(Collections.QUIZZES).doc(quizId).set(quiz);
+            const dbQuiz = {
+                id: quiz.id,
+                title: quiz.title,
+                questions: quiz.questions, // JSONB
+                total_questions: quiz.totalQuestions,
+                passing_score: quiz.passingScore,
+                access_tier: quiz.accessTier,
+                ai_generated: quiz.aiGenerated,
+                generated_by: quiz.generatedBy,
+                created_at: quiz.createdAt.toISOString(),
+                updated_at: quiz.updatedAt.toISOString(),
+            };
+
+            // Save to Supabase
+            const { error } = await supabase
+                .from(Tables.QUIZZES)
+                .insert(dbQuiz);
+
+            if (error) throw new Error(`Supabase error: ${error.message}`);
 
             // Cache the quiz
             this.cache.set(cacheKey, quiz);

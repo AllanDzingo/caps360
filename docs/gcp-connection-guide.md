@@ -42,6 +42,33 @@ gcloud services enable secretmanager.googleapis.com
 gcloud services enable containerregistry.googleapis.com
 gcloud services enable firestore.googleapis.com
 gcloud services enable storage-api.googleapis.com
+## Providing service account credentials
+
+For local development you can use Application Default Credentials:
+
+```powershell
+gcloud auth application-default login
+```
+
+For deployed environments (e.g., Fly.io) we recommend using a service account key saved as a secret rather than committing credentials to the repo. This project supports two env var formats:
+
+- `GCP_SERVICE_ACCOUNT_KEY` — raw JSON contents of the service account key
+- `GCP_SERVICE_ACCOUNT_KEY_B64` — base64 encoded JSON of the service account key
+
+When either variable is provided, the app will parse it and pass the credentials directly to the Google client libraries. Example (PowerShell) to add a secret to Fly:
+
+```powershell
+# $json = Get-Content .\service-account.json -Raw
+# flyctl secrets set GCP_SERVICE_ACCOUNT_KEY="$json" -a caps360-backend
+
+# or base64 (safer for preserving newlines)
+# $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($json))
+# flyctl secrets set GCP_SERVICE_ACCOUNT_KEY_B64=$b64 -a caps360-backend
+```
+
+After setting the secret, redeploy the backend; it will use the provided credentials to authenticate with Firestore and Cloud Storage.
+
+**Important:** Some organizations enforce an Org Policy that prevents creating long‑lived service account keys (you may see `iam.disableServiceAccountKeyCreation`). In that case, prefer **Workload Identity Federation (WIF)** which lets GitHub Actions mint short‑lived tokens without creating JSON keys. See `docs/wif-setup.md` for a step‑by‑step WIF setup and a ready-to-use GitHub Actions workflow included in this repo.
 ```
 
 ---

@@ -1,0 +1,1 @@
+Error: {"stack":"Error: getaddrinfo ENOTFOUND db.uldvvywrnbzlqdtnmpyk.supabase.co\n    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)","message":"getaddrinfo ENOTFOUND db.uldvvywrnbzlqdtnmpyk.supabase.co","errno":-3008,"code":"ENOTFOUND","syscall":"getaddrinfo","hostname":"db.uldvvywrnbzlqdtnmpyk.supabase.co"}

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, Collections } from '../config/firestore';
+import { supabase, Tables } from '../config/supabase';
 import config from '../config';
 import logger from '../config/logger';
 import {
@@ -10,11 +10,10 @@ import {
     CreateUserDTO,
     LoginDTO,
     UserResponse,
+    UserRole,
 } from '../models/user.model';
 
 export class AuthService {
-    private db = getFirestore();
-
     /**
      * Register a new user
      */
@@ -49,8 +48,33 @@ export class AuthService {
                 updatedAt: now,
             };
 
-            // Save to Firestore
-            await this.db.collection(Collections.USERS).doc(userId).set(user);
+            // Save to Supabase
+            // Note: We need to map camelCase (model) to snake_case (DB) if needed.
+            // Assuming the Supabase table has snake_case columns matching the model structure or JSONB.
+            // For a relational DB, flat snake_case columns are better.
+            const dbUser = {
+                id: user.id,
+                email: user.email,
+                password_hash: user.passwordHash,
+                first_name: user.firstName,
+                last_name: user.lastName,
+                role: user.role,
+                grade: user.grade,
+                subjects: user.subjects,
+                current_tier: user.currentTier,
+                trial_premium: user.trialPremium,
+                welcome_premium: user.welcomePremium,
+                created_at: user.createdAt.toISOString(),
+                updated_at: user.updatedAt.toISOString(),
+            };
+
+            const { error } = await supabase
+                .from(Tables.USERS)
+                .insert(dbUser);
+
+            if (error) {
+                throw new Error(`Supabase error: ${error.message}`);
+            }
 
             logger.info(`User registered: ${userId} (${data.email})`);
 
@@ -85,10 +109,13 @@ export class AuthService {
             }
 
             // Update last login
-            await this.db.collection(Collections.USERS).doc(user.id).update({
-                lastLoginAt: new Date(),
-                updatedAt: new Date(),
-            });
+            await supabase
+                .from(Tables.USERS)
+                .update({
+                    last_login_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', user.id);
 
             logger.info(`User logged in: ${user.id} (${user.email})`);
 
@@ -110,11 +137,17 @@ export class AuthService {
      */
     async getUserById(userId: string): Promise<User | null> {
         try {
-            const doc = await this.db.collection(Collections.USERS).doc(userId).get();
-            if (!doc.exists) {
+            const { data, error } = await supabase
+                .from(Tables.USERS)
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error || !data) {
                 return null;
             }
-            return doc.data() as User;
+
+            return this.mapDbUserToModel(data);
         } catch (error) {
             logger.error('Get user error:', error);
             throw error;
@@ -126,21 +159,48 @@ export class AuthService {
      */
     private async findUserByEmail(email: string): Promise<User | null> {
         try {
-            const snapshot = await this.db
-                .collection(Collections.USERS)
-                .where('email', '==', email.toLowerCase())
-                .limit(1)
-                .get();
+            const { data, error } = await supabase
+                .from(Tables.USERS)
+                .select('*')
+                .eq('email', email.toLowerCase())
+                .single();
 
-            if (snapshot.empty) {
+            if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+                throw error;
+            }
+
+            if (!data) {
                 return null;
             }
 
-            return snapshot.docs[0].data() as User;
+            return this.mapDbUserToModel(data);
         } catch (error) {
             logger.error('Find user by email error:', error);
             throw error;
         }
+    }
+
+    private mapDbUserToModel(dbUser: any): User {
+        return {
+            id: dbUser.id,
+            email: dbUser.email,
+            passwordHash: dbUser.password_hash,
+            firstName: dbUser.first_name,
+            lastName: dbUser.last_name,
+            role: dbUser.role as UserRole,
+            grade: dbUser.grade,
+            subjects: dbUser.subjects,
+            childrenIds: dbUser.children_ids,
+            subscriptionId: dbUser.subscription_id,
+            currentTier: dbUser.current_tier,
+            trialPremium: dbUser.trial_premium,
+            trialEndDate: dbUser.trial_end_date ? new Date(dbUser.trial_end_date) : undefined,
+            welcomePremium: dbUser.welcome_premium,
+            welcomePremiumEndDate: dbUser.welcome_premium_end_date ? new Date(dbUser.welcome_premium_end_date) : undefined,
+            createdAt: new Date(dbUser.created_at),
+            updatedAt: new Date(dbUser.updated_at),
+            lastLoginAt: dbUser.last_login_at ? new Date(dbUser.last_login_at) : undefined,
+        };
     }
 
     /**

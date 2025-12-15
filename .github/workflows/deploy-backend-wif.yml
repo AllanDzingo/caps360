@@ -1,0 +1,54 @@
+name: Deploy Backend (WIF)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  FLY_APP: caps360-backend
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }} # full resource name
+          service_account: ${{ secrets.WIF_SA }} # service account email
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Get short-lived access token for GCP
+        id: get_token
+        run: |
+          TOKEN=$(gcloud auth print-access-token)
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Install flyctl
+        run: |
+          curl -L https://fly.io/install.sh | sh
+          echo "$HOME/.fly/bin" >> $GITHUB_PATH
+
+      - name: Configure Fly (authenticate)
+        run: flyctl auth login --token ${{ secrets.FLY_API_TOKEN }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Set GCP_ACCESS_TOKEN in Fly secrets
+        run: flyctl secrets set GCP_ACCESS_TOKEN=${{ steps.get_token.outputs.token }} -a ${{ env.FLY_APP }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Deploy backend to Fly
+        run: flyctl deploy -a ${{ env.FLY_APP }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

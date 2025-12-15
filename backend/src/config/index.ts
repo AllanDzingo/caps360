@@ -6,12 +6,6 @@ export const config = {
     port: parseInt(process.env.PORT || '8080', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
 
-    gcp: {
-        projectId: process.env.GCP_PROJECT_ID || '',
-        region: process.env.GCP_REGION || 'us-central1',
-        bucketName: process.env.GCS_BUCKET_NAME || 'caps360-content',
-    },
-
     jwt: {
         secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
         expiresIn: process.env.JWT_EXPIRES_IN || '7d',
@@ -20,6 +14,12 @@ export const config = {
     ai: {
         geminiApiKey: process.env.GEMINI_API_KEY || '',
         model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    },
+
+    supabase: {
+        url: process.env.SUPABASE_URL || 'https://uldvvywrnbzlqdtnmpyk.supabase.co',
+        anonKey: process.env.SUPABASE_ANON_KEY || 'sb_publishable_xv62FtlS3pwSH8clF39pMw_wZF3WG7c',
+        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
     },
 
     payfast: {

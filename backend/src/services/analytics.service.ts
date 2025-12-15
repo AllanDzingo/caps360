@@ -1,11 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, Collections } from '../config/firestore';
+import { supabase, Tables } from '../config/supabase';
 import logger from '../config/logger';
 import { AnalyticsEvent, AnalyticsEventType } from '../models/analytics.model';
 
 export class AnalyticsService {
-    private db = getFirestore();
-
     /**
      * Track an analytics event
      */
@@ -28,7 +26,24 @@ export class AnalyticsService {
                 timestamp: new Date(),
             };
 
-            await this.db.collection(Collections.ANALYTICS).doc(eventId).set(event);
+            const dbEvent = {
+                id: event.id,
+                user_id: event.userId,
+                event_type: event.eventType,
+                metadata: event.metadata, // JSONB
+                user_tier: event.userTier,
+                user_role: event.userRole,
+                timestamp: event.timestamp.toISOString(),
+            };
+
+            const { error } = await supabase
+                .from(Tables.ANALYTICS)
+                .insert(dbEvent);
+
+            if (error) {
+                logger.warn('Supabase analytics track error:', error.message);
+                return;
+            }
 
             logger.info(`Analytics event tracked: ${eventType} for user ${userId}`);
         } catch (error) {
@@ -42,14 +57,16 @@ export class AnalyticsService {
      */
     async getUserAnalytics(userId: string, limit: number = 100): Promise<AnalyticsEvent[]> {
         try {
-            const snapshot = await this.db
-                .collection(Collections.ANALYTICS)
-                .where('userId', '==', userId)
-                .orderBy('timestamp', 'desc')
-                .limit(limit)
-                .get();
+            const { data, error } = await supabase
+                .from(Tables.ANALYTICS)
+                .select('*')
+                .eq('user_id', userId)
+                .order('timestamp', { ascending: false })
+                .limit(limit);
 
-            return snapshot.docs.map(doc => doc.data() as AnalyticsEvent);
+            if (error) throw new Error(error.message);
+
+            return data.map(this.mapDbEventToModel);
         } catch (error) {
             logger.error('Get user analytics error:', error);
             throw error;
@@ -61,13 +78,15 @@ export class AnalyticsService {
      */
     async getAnalyticsSummary(startDate: Date, endDate: Date): Promise<any> {
         try {
-            const snapshot = await this.db
-                .collection(Collections.ANALYTICS)
-                .where('timestamp', '>=', startDate)
-                .where('timestamp', '<=', endDate)
-                .get();
+            const { data, error } = await supabase
+                .from(Tables.ANALYTICS)
+                .select('*')
+                .gte('timestamp', startDate.toISOString())
+                .lte('timestamp', endDate.toISOString());
 
-            const events = snapshot.docs.map(doc => doc.data() as AnalyticsEvent);
+            if (error) throw new Error(error.message);
+
+            const events = data.map(this.mapDbEventToModel);
 
             // Aggregate data
             const summary = {
@@ -111,22 +130,23 @@ export class AnalyticsService {
      */
     async getRevenueAnalytics(startDate: Date, endDate: Date): Promise<any> {
         try {
-            const snapshot = await this.db
-                .collection(Collections.PAYMENTS)
-                .where('createdAt', '>=', startDate)
-                .where('createdAt', '<=', endDate)
-                .where('status', '==', 'success')
-                .get();
+            // Query Payments table
+            const { data, error } = await supabase
+                .from(Tables.PAYMENTS)
+                .select('*')
+                .gte('created_at', startDate.toISOString())
+                .lte('created_at', endDate.toISOString())
+                .eq('status', 'success');
 
-            const payments = snapshot.docs.map(doc => doc.data());
+            if (error) throw new Error(error.message);
 
             const revenue = {
                 totalRevenue: 0,
                 revenueByProvider: {} as Record<string, number>,
-                transactionCount: payments.length,
+                transactionCount: data.length,
             };
 
-            payments.forEach((payment: any) => {
+            data.forEach((payment: any) => {
                 revenue.totalRevenue += payment.amount;
                 revenue.revenueByProvider[payment.provider] =
                     (revenue.revenueByProvider[payment.provider] || 0) + payment.amount;
@@ -137,6 +157,18 @@ export class AnalyticsService {
             logger.error('Get revenue analytics error:', error);
             throw error;
         }
+    }
+
+    private mapDbEventToModel(dbEvent: any): AnalyticsEvent {
+        return {
+            id: dbEvent.id,
+            userId: dbEvent.user_id,
+            eventType: dbEvent.event_type as AnalyticsEventType,
+            metadata: dbEvent.metadata,
+            userTier: dbEvent.user_tier,
+            userRole: dbEvent.user_role,
+            timestamp: new Date(dbEvent.timestamp),
+        };
     }
 }
 

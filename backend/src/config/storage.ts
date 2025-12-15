@@ -1,41 +1,61 @@
-import { Storage } from '@google-cloud/storage';
-import config from './index';
+import { supabase } from './supabase';
+import logger from './logger';
 
-let storageInstance: Storage | null = null;
+/**
+ * Upload file to Supabase Storage
+ */
+export const uploadFile = async (
+    bucketName: string,
+    path: string,
+    file: Buffer,
+    contentType: string
+): Promise<string> => {
+    try {
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(path, file, {
+                contentType,
+                cacheControl: '3600',
+                upsert: true,
+            });
 
-export const getStorage = (): Storage => {
-    if (!storageInstance) {
-        storageInstance = new Storage({
-            projectId: config.gcp.projectId,
-        });
+        if (error) {
+            throw error;
+        }
+
+        return data.path;
+    } catch (error) {
+        logger.error('Supabase upload error:', error);
+        throw error;
     }
-    return storageInstance;
-};
-
-export const getBucket = () => {
-    const storage = getStorage();
-    return storage.bucket(config.gcp.bucketName);
 };
 
 /**
  * Generate a signed URL for secure file access
- * @param fileName - Name of the file in the bucket
- * @param expiresInMinutes - URL expiration time in minutes (default: 60)
  */
 export const generateSignedUrl = async (
-    fileName: string,
+    bucketName: string,
+    path: string,
     expiresInMinutes: number = 60
 ): Promise<string> => {
-    const bucket = getBucket();
-    const file = bucket.file(fileName);
+    try {
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .createSignedUrl(path, expiresInMinutes * 60);
 
-    const [url] = await file.getSignedUrl({
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + expiresInMinutes * 60 * 1000,
-    });
+        if (error) {
+            throw error;
+        }
 
-    return url;
+        return data.signedUrl;
+    } catch (error) {
+        logger.error('Supabase signed URL error:', error);
+        // Fallback or rethrow
+        return '';
+    }
 };
 
-export default getStorage;
+export default {
+    uploadFile,
+    generateSignedUrl,
+};

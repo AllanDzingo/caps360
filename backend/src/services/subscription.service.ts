@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { addDays } from 'date-fns';
-import { getFirestore, Collections } from '../config/firestore';
+import { supabase, Tables } from '../config/supabase';
 import config from '../config';
 import logger from '../config/logger';
 import {
@@ -11,8 +11,6 @@ import {
 } from '../models/user.model';
 
 export class SubscriptionService {
-    private db = getFirestore();
-
     /**
      * Get user's effective access level
      * Considers trial_premium and welcome_premium flags
@@ -42,11 +40,16 @@ export class SubscriptionService {
             const now = new Date();
             const trialEndDate = addDays(now, config.trial.durationDays);
 
-            await this.db.collection(Collections.USERS).doc(userId).update({
-                trialPremium: true,
-                trialEndDate,
-                updatedAt: now,
-            });
+            const { error } = await supabase
+                .from(Tables.USERS)
+                .update({
+                    trial_premium: true,
+                    trial_end_date: trialEndDate.toISOString(),
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', userId);
+
+            if (error) throw new Error(`Supabase error: ${error.message}`);
 
             logger.info(`Free trial started for user: ${userId}, ends: ${trialEndDate}`);
         } catch (error) {
@@ -87,16 +90,43 @@ export class SubscriptionService {
                 updatedAt: now,
             };
 
-            await this.db.collection(Collections.SUBSCRIPTIONS).doc(subscriptionId).set(subscription);
+            const dbSubscription = {
+                id: subscription.id,
+                user_id: subscription.userId,
+                tier: subscription.tier,
+                status: subscription.status,
+                payment_provider: subscription.paymentProvider,
+                paystack_subscription_id: subscription.paystackSubscriptionId,
+                paystack_customer_code: subscription.paystackCustomerCode,
+                amount: subscription.amount,
+                currency: subscription.currency,
+                billing_cycle: subscription.billingCycle,
+                start_date: subscription.startDate.toISOString(),
+                next_billing_date: subscription.nextBillingDate?.toISOString(),
+                created_at: subscription.createdAt.toISOString(),
+                updated_at: subscription.updatedAt.toISOString(),
+            };
+
+            // Save subscription
+            const { error: subError } = await supabase
+                .from(Tables.SUBSCRIPTIONS)
+                .insert(dbSubscription);
+
+            if (subError) throw new Error(`Supabase error: ${subError.message}`);
 
             // Update user with subscription and welcome premium
-            await this.db.collection(Collections.USERS).doc(userId).update({
-                subscriptionId,
-                currentTier: tier,
-                welcomePremium: true,
-                welcomePremiumEndDate,
-                updatedAt: now,
-            });
+            const { error: userError } = await supabase
+                .from(Tables.USERS)
+                .update({
+                    subscription_id: subscriptionId,
+                    current_tier: tier,
+                    welcome_premium: true,
+                    welcome_premium_end_date: welcomePremiumEndDate.toISOString(),
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', userId);
+
+            if (userError) throw new Error(`Supabase user update error: ${userError.message}`);
 
             logger.info(`Paid subscription started for user: ${userId}, tier: ${tier}`);
 
@@ -109,34 +139,36 @@ export class SubscriptionService {
 
     /**
      * Handle trial expiry
-     * Called by Cloud Function when trial ends
      */
     async handleTrialExpiry(userId: string): Promise<void> {
         try {
-            const userDoc = await this.db.collection(Collections.USERS).doc(userId).get();
-            const user = userDoc.data() as User;
+            const { data: user, error } = await supabase
+                .from(Tables.USERS)
+                .select('trial_premium, trial_end_date')
+                .eq('id', userId)
+                .single();
 
-            if (!user || !user.trialPremium) {
+            if (error || !user || !user.trial_premium) {
                 return;
             }
 
             const now = new Date();
 
             // Check if trial has actually expired
-            if (user.trialEndDate && user.trialEndDate > now) {
+            if (user.trial_end_date && new Date(user.trial_end_date) > now) {
                 return; // Trial still active
             }
 
             // Set trial_premium to false
-            await this.db.collection(Collections.USERS).doc(userId).update({
-                trialPremium: false,
-                updatedAt: now,
-            });
+            await supabase
+                .from(Tables.USERS)
+                .update({
+                    trial_premium: false,
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', userId);
 
             logger.info(`Trial expired for user: ${userId}`);
-
-            // TODO: Send payment reminder email
-            // TODO: Trigger PayFast payment request
         } catch (error) {
             logger.error('Handle trial expiry error:', error);
             throw error;
@@ -145,33 +177,36 @@ export class SubscriptionService {
 
     /**
      * Handle welcome premium expiry
-     * Called by Cloud Function after 14 days of paid subscription
      */
     async handleWelcomePremiumExpiry(userId: string): Promise<void> {
         try {
-            const userDoc = await this.db.collection(Collections.USERS).doc(userId).get();
-            const user = userDoc.data() as User;
+            const { data: user, error } = await supabase
+                .from(Tables.USERS)
+                .select('welcome_premium, welcome_premium_end_date, current_tier')
+                .eq('id', userId)
+                .single();
 
-            if (!user || !user.welcomePremium) {
+            if (error || !user || !user.welcome_premium) {
                 return;
             }
 
             const now = new Date();
 
             // Check if welcome premium has actually expired
-            if (user.welcomePremiumEndDate && user.welcomePremiumEndDate > now) {
+            if (user.welcome_premium_end_date && new Date(user.welcome_premium_end_date) > now) {
                 return; // Welcome premium still active
             }
 
             // Set welcome_premium to false
-            await this.db.collection(Collections.USERS).doc(userId).update({
-                welcomePremium: false,
-                updatedAt: now,
-            });
+            await supabase
+                .from(Tables.USERS)
+                .update({
+                    welcome_premium: false,
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', userId);
 
-            logger.info(`Welcome premium expired for user: ${userId}, reverted to tier: ${user.currentTier}`);
-
-            // TODO: Send notification about tier reversion
+            logger.info(`Welcome premium expired for user: ${userId}, reverted to tier: ${user.current_tier}`);
         } catch (error) {
             logger.error('Handle welcome premium expiry error:', error);
             throw error;
@@ -183,27 +218,41 @@ export class SubscriptionService {
      */
     async upgradeSubscription(userId: string, newTier: SubscriptionTier): Promise<void> {
         try {
-            const userDoc = await this.db.collection(Collections.USERS).doc(userId).get();
-            const user = userDoc.data() as User;
+            // Get user to find subscription ID
+            const { data: user, error } = await supabase
+                .from(Tables.USERS)
+                .select('subscription_id')
+                .eq('id', userId)
+                .single();
 
-            if (!user || !user.subscriptionId) {
+            if (error || !user || !user.subscription_id) {
                 throw new Error('No active subscription found');
             }
 
             const now = new Date();
 
             // Update subscription
-            await this.db.collection(Collections.SUBSCRIPTIONS).doc(user.subscriptionId).update({
-                tier: newTier,
-                amount: this.getTierPrice(newTier),
-                updatedAt: now,
-            });
+            const { error: subError } = await supabase
+                .from(Tables.SUBSCRIPTIONS)
+                .update({
+                    tier: newTier,
+                    amount: this.getTierPrice(newTier),
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', user.subscription_id);
+
+            if (subError) throw subError;
 
             // Update user
-            await this.db.collection(Collections.USERS).doc(userId).update({
-                currentTier: newTier,
-                updatedAt: now,
-            });
+            const { error: userError } = await supabase
+                .from(Tables.USERS)
+                .update({
+                    current_tier: newTier,
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', userId);
+
+            if (userError) throw userError;
 
             logger.info(`Subscription upgraded for user: ${userId}, new tier: ${newTier}`);
         } catch (error) {
@@ -217,25 +266,29 @@ export class SubscriptionService {
      */
     async cancelSubscription(userId: string): Promise<void> {
         try {
-            const userDoc = await this.db.collection(Collections.USERS).doc(userId).get();
-            const user = userDoc.data() as User;
+            const { data: user, error } = await supabase
+                .from(Tables.USERS)
+                .select('subscription_id')
+                .eq('id', userId)
+                .single();
 
-            if (!user || !user.subscriptionId) {
+            if (error || !user || !user.subscription_id) {
                 throw new Error('No active subscription found');
             }
 
             const now = new Date();
 
             // Update subscription status
-            await this.db.collection(Collections.SUBSCRIPTIONS).doc(user.subscriptionId).update({
-                status: SubscriptionStatus.CANCELLED,
-                cancelledAt: now,
-                updatedAt: now,
-            });
+            await supabase
+                .from(Tables.SUBSCRIPTIONS)
+                .update({
+                    status: SubscriptionStatus.CANCELLED,
+                    cancelled_at: now.toISOString(),
+                    updated_at: now.toISOString(),
+                })
+                .eq('id', user.subscription_id);
 
             logger.info(`Subscription cancelled for user: ${userId}`);
-
-            // TODO: Cancel Paystack subscription
         } catch (error) {
             logger.error('Cancel subscription error:', error);
             throw error;

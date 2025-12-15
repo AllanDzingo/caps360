@@ -1,14 +1,12 @@
 import crypto from 'crypto';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, Collections } from '../config/firestore';
+import { supabase, Tables } from '../config/supabase';
 import config from '../config';
 import logger from '../config/logger';
 import { PaymentRecord } from '../models/analytics.model';
 
 export class PaymentService {
-    private db = getFirestore();
-
     /**
      * PayFast: Generate payment URL for trial payment capture
      */
@@ -191,7 +189,25 @@ export class PaymentService {
                 updatedAt: new Date(),
             };
 
-            await this.db.collection(Collections.PAYMENTS).doc(paymentId).set(payment);
+            const dbPayment = {
+                id: payment.id,
+                user_id: payment.userId,
+                provider: payment.provider,
+                amount: payment.amount,
+                currency: payment.currency,
+                status: payment.status,
+                metadata: payment.metadata,
+                created_at: payment.createdAt.toISOString(),
+                updated_at: payment.updatedAt.toISOString(),
+            };
+
+            const { error } = await supabase
+                .from(Tables.PAYMENTS)
+                .insert(dbPayment);
+
+            if (error) {
+                throw new Error(`Supabase error: ${error.message}`);
+            }
 
             logger.info(`Payment recorded: ${paymentId} (${provider}, ${status})`);
 
