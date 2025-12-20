@@ -35,7 +35,7 @@ COPY --from=builder /app/dist ./dist
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=8080
-ENV GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-wif-config.json
+
 
 # Expose port
 EXPOSE 8080

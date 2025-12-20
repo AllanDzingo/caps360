@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import config from '../config';
 import authService from '../services/auth.service';
 import logger from '../config/logger';
 
@@ -25,11 +27,28 @@ export const authenticate = async (
 
         const token = authHeader.substring(7);
 
-        // Verify token
-        const decoded = authService.verifyToken(token);
+        // Verify token (Supabase JWTs are signed with the Supabase JWT secret)
+        const secret = config.jwt.secret;
+        let decoded: any;
+
+        try {
+            decoded = jwt.verify(token, secret);
+        } catch (err) {
+            // If local secret fails, log it and fail - we should ensure config.jwt.secret is set to the Supabase JWT secret
+            logger.error('JWT Verification failed:', err);
+            throw new Error('Invalid or expired token');
+        }
+
+        // Supabase JWTs have 'sub' as the user ID
+        const userId = decoded.sub || decoded.userId;
+
+        if (!userId) {
+            res.status(401).json({ error: 'Invalid token payload' });
+            return;
+        }
 
         // Get user from database
-        const user = await authService.getUserById(decoded.userId);
+        const user = await authService.getUserById(userId);
 
         if (!user) {
             res.status(401).json({ error: 'User not found' });

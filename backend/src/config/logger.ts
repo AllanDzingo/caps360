@@ -19,9 +19,8 @@ const logger = winston.createLogger({
     ],
 });
 
-// In production, log to Google Cloud Logging
+// In production, log to console as JSON (no GCP Cloud Logging)
 if (config.nodeEnv === 'production') {
-    // Cloud Run automatically captures stdout/stderr to Cloud Logging
     logger.add(
         new winston.transports.Console({
             format: winston.format.json(),

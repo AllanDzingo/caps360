@@ -15,8 +15,19 @@ export const supabase = createClient(
     }
 );
 
-// Optional: Admin client for operations requiring service_role key
-// export const supabaseAdmin = createClient(...)
+export const supabaseAdmin = config.supabase.serviceRoleKey
+    ? createClient(
+        config.supabase.url,
+        config.supabase.serviceRoleKey,
+        {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false,
+            },
+        }
+    )
+    : null;
 
 export const Tables = {
     USERS: 'users',

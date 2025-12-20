@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import { supabase, Tables } from './config/supabase';
 import config from './config';
 import logger from './config/logger';
 import { requestLogger, errorLogger } from './middleware/logging.middleware';
@@ -99,10 +100,26 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 // Start server
 const PORT = config.port;
 
-app.listen(PORT, '0.0.0.0', () => {
+// Check database connection
+async function checkDatabaseConnection() {
+    try {
+        const { error } = await supabase.from(Tables.USERS).select('count', { count: 'exact', head: true });
+        if (error) {
+            logger.error('❌ Supabase connection failed:', error.message);
+            // We might not want to exit process here in case of transient errors, but for now let's just log it.
+        } else {
+            logger.info('✅ Supabase connected successfully');
+        }
+    } catch (error) {
+        logger.error('❌ Supabase connection error:', error);
+    }
+}
+
+app.listen(PORT, '0.0.0.0', async () => {
     logger.info(`🚀 CAPS360 API server running on port ${PORT}`);
     logger.info(`Environment: ${config.nodeEnv}`);
-    // logger.info(`Supabase URL: ${config.supabase.url}`);
+
+    await checkDatabaseConnection();
 });
 
 export default app;

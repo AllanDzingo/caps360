@@ -32,40 +32,12 @@ resource "google_project_service" "required_apis" {
     "run.googleapis.com",
     "cloudbuild.googleapis.com",
     "secretmanager.googleapis.com",
-    "firestore.googleapis.com",
-    "storage-api.googleapis.com",
+    "iam.googleapis.com", 
+    # Removed firestore.googleapis.com and storage-api.googleapis.com as we are moving to Supabase
   ])
   
   service            = each.value
   disable_on_destroy = false
-}
-
-# Create Firestore database
-resource "google_firestore_database" "database" {
-  project     = var.project_id
-  name        = "(default)"
-  location_id = var.region
-  type        = "FIRESTORE_NATIVE"
-  
-  depends_on = [google_project_service.required_apis]
-}
-
-# Create Cloud Storage bucket for content
-resource "google_storage_bucket" "content_bucket" {
-  name          = "${var.project_id}-content"
-  location      = var.region
-  force_destroy = false
-  
-  uniform_bucket_level_access = true
-  
-  cors {
-    origin          = ["https://${var.project_id}.web.app", "http://localhost:5173"]
-    method          = ["GET", "HEAD", "PUT", "POST", "DELETE"]
-    response_header = ["*"]
-    max_age_seconds = 3600
-  }
-  
-  depends_on = [google_project_service.required_apis]
 }
 
 # Create secrets in Secret Manager
@@ -97,6 +69,52 @@ resource "google_secret_manager_secret" "gemini_api_key" {
 resource "google_secret_manager_secret_version" "gemini_api_key_version" {
   secret      = google_secret_manager_secret.gemini_api_key.id
   secret_data = var.gemini_api_key != "" ? var.gemini_api_key : "PLACEHOLDER-ADD-YOUR-KEY"
+}
+
+# Supabase Secrets
+resource "google_secret_manager_secret" "supabase_url" {
+  secret_id = "supabase-url"
+  
+  replication {
+    auto {}
+  }
+  
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "supabase_url_version" {
+  secret      = google_secret_manager_secret.supabase_url.id
+  secret_data = "PLACEHOLDER-UPDATE-IN-CONSOLE" # User to update manually or via var
+}
+
+resource "google_secret_manager_secret" "supabase_anon_key" {
+  secret_id = "supabase-anon-key"
+  
+  replication {
+    auto {}
+  }
+  
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "supabase_anon_key_version" {
+  secret      = google_secret_manager_secret.supabase_anon_key.id
+  secret_data = "PLACEHOLDER-UPDATE-IN-CONSOLE"
+}
+
+resource "google_secret_manager_secret" "supabase_service_role_key" {
+  secret_id = "supabase-service-role-key"
+  
+  replication {
+    auto {}
+  }
+  
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "supabase_service_role_key_version" {
+  secret      = google_secret_manager_secret.supabase_service_role_key.id
+  secret_data = "PLACEHOLDER-UPDATE-IN-CONSOLE"
 }
 
 # Payment secrets (testing mode)
@@ -166,19 +184,7 @@ resource "google_service_account" "cloud_run_sa" {
   display_name = "CAPS360 Backend Service Account"
 }
 
-# Grant permissions to service account
-resource "google_project_iam_member" "cloud_run_sa_firestore" {
-  project = var.project_id
-  role    = "roles/datastore.user"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
-
-resource "google_project_iam_member" "cloud_run_sa_storage" {
-  project = var.project_id
-  role    = "roles/storage.objectAdmin"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
-
+# Grant permissions to service account (Secrets Access)
 resource "google_secret_manager_secret_iam_member" "cloud_run_sa_secrets" {
   for_each = toset([
     "jwt-secret",
@@ -187,6 +193,9 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_sa_secrets" {
     "payfast-merchant-key",
     "payfast-passphrase",
     "paystack-secret-key",
+    "supabase-url",
+    "supabase-anon-key",
+    "supabase-service-role-key"
   ])
   
   secret_id = each.value
@@ -200,6 +209,9 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_sa_secrets" {
     google_secret_manager_secret.payfast_merchant_key,
     google_secret_manager_secret.payfast_passphrase,
     google_secret_manager_secret.paystack_secret_key,
+    google_secret_manager_secret.supabase_url,
+    google_secret_manager_secret.supabase_anon_key,
+    google_secret_manager_secret.supabase_service_role_key
   ]
 }
 
@@ -237,11 +249,7 @@ resource "google_cloud_run_service" "backend" {
           value = var.region
         }
         
-        env {
-          name  = "GCS_BUCKET_NAME"
-          value = google_storage_bucket.content_bucket.name
-        }
-        
+        # Payment Flags
         env {
           name  = "PAYSTACK_ENABLED"
           value = "false"
@@ -252,6 +260,7 @@ resource "google_cloud_run_service" "backend" {
           value = "false"
         }
         
+        # Secrets
         env {
           name = "JWT_SECRET"
           value_from {
@@ -301,6 +310,37 @@ resource "google_cloud_run_service" "backend" {
             }
           }
         }
+
+        # Supabase Configuration
+        env {
+          name = "SUPABASE_URL"
+          value_from {
+            secret_key_ref {
+              name = google_secret_manager_secret.supabase_url.secret_id
+              key  = "latest"
+            }
+          }
+        }
+
+        env {
+          name = "SUPABASE_ANON_KEY"
+          value_from {
+            secret_key_ref {
+              name = google_secret_manager_secret.supabase_anon_key.secret_id
+              key  = "latest"
+            }
+          }
+        }
+
+        env {
+          name = "SUPABASE_SERVICE_ROLE_KEY"
+          value_from {
+            secret_key_ref {
+              name = google_secret_manager_secret.supabase_service_role_key.secret_id
+              key  = "latest"
+            }
+          }
+        }
       }
     }
     
@@ -321,6 +361,9 @@ resource "google_cloud_run_service" "backend" {
     google_project_service.required_apis,
     google_secret_manager_secret_version.jwt_secret_version,
     google_secret_manager_secret_version.gemini_api_key_version,
+    google_secret_manager_secret_version.supabase_url_version,
+    google_secret_manager_secret_version.supabase_anon_key_version,
+    google_secret_manager_secret_version.supabase_service_role_key_version
   ]
   
   lifecycle {

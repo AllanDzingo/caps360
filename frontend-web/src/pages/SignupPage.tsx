@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { authAPI, subscriptionAPI } from '@/lib/api';
-import { useAuthStore } from '@/store/authStore';
+import { subscriptionAPI } from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 
 export const SignupPage: React.FC = () => {
     const navigate = useNavigate();
-    const { setAuth } = useAuthStore();
     const [step, setStep] = useState<'details' | 'trial-choice'>('details');
     const [formData, setFormData] = useState({
         email: '',
@@ -21,14 +20,27 @@ export const SignupPage: React.FC = () => {
     });
 
     const registerMutation = useMutation({
-        mutationFn: authAPI.register,
-        onSuccess: (response) => {
-            const { user, token } = response.data;
-            setAuth(user, token);
+        mutationFn: async (data: any) => {
+            const { error, data: authData } = await supabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                    data: {
+                        first_name: data.firstName,
+                        last_name: data.lastName,
+                        role: data.role,
+                        grade: data.grade,
+                    },
+                },
+            });
+            if (error) throw error;
+            return authData;
+        },
+        onSuccess: () => {
             setStep('trial-choice');
         },
         onError: (error: any) => {
-            alert(error.response?.data?.error || 'Registration failed');
+            alert(error.message || 'Registration failed');
         },
     });
 
