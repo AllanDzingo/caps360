@@ -49,8 +49,7 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 - **Runtime:** Node.js + Express + TypeScript
 - **Database:** Supabase (PostgreSQL)
 - **Storage:** Supabase Storage
-- **Functions:** Google Cloud Functions
-- **Hosting:** Google Cloud Run
+- **Hosting:** Fly.io (or generic Docker hosting)
 - **AI:** Google Gemini Pro
 
 ### Frontend
@@ -65,11 +64,9 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 
 - **CI/CD:** GitHub Actions
   - Automated testing on pull requests
-  - Continuous deployment to GCP
   - Security scanning and dependency updates
-- **IaC:** Terraform
-- **Monitoring:** Google Cloud Logging & Monitoring
-- **Secrets:** Google Secret Manager
+- **Monitoring:** Open source or provider-specific tools
+- **Secrets:** Environment variables / Secret Management
 
 > 📚 **See [GitHub Actions Guide](./docs/github-actions-guide.md) for complete CI/CD setup instructions**
 

@@ -3,7 +3,8 @@ app = "caps360-frontend"
 primary_region = "iad"
 
 [build]
-  dockerfile = "frontend-web/Dockerfile"
+  dockerfile = "Dockerfile"
+  context = "frontend-web"
 
 [http_service]
   internal_port = 80

@@ -3,7 +3,8 @@ app = "caps360-backend"
 primary_region = "iad"
 
 [build]
-  dockerfile = "backend/Dockerfile"
+  dockerfile = "Dockerfile"
+  context = "backend"
 
 [env]
   PORT = "8080"
