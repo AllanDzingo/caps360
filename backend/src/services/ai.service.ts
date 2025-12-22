@@ -39,6 +39,10 @@ export class AIService {
                     .eq('id', conversationId)
                     .single();
 
+                if (error && error.code !== 'PGRST116') {
+                    throw new Error(`Supabase error: ${error.message}`);
+                }
+
                 if (data) {
                     conversation = this.mapDbConversationToModel(data);
                 } else {
