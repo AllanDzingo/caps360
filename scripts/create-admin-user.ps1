@@ -1,3 +1,5 @@
+
+
 # CAPS360 - Create Admin User
 # This script creates an admin user in Supabase
 
