@@ -3,7 +3,7 @@
 ![CAPS360 Logo](./docs/assets/logo.png)
 
 [![CI](https://github.com/YOUR_USERNAME/CAPS360/workflows/CI%20-%20Tests%20and%20Linting/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
-[![Backend Deploy](https://github.com/YOUR_USERNAME/CAPS360/workflows/Deploy%20Backend%20to%20Cloud%20Run/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
+[![Deploy](https://github.com/YOUR_USERNAME/CAPS360/workflows/Deploy%20to%20Fly.io/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
 [![Security](https://github.com/YOUR_USERNAME/CAPS360/workflows/Security%20Scanning/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
 
 ## Overview
@@ -50,7 +50,7 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 - **Database:** Supabase (PostgreSQL)
 - **Storage:** Supabase Storage
 - **Hosting:** Fly.io (or generic Docker hosting)
-- **AI:** Google Gemini Pro
+- **AI:** Google Gemini (via API)
 
 ### Frontend
 
@@ -65,14 +65,14 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 - **CI/CD:** GitHub Actions
   - Automated testing on pull requests
   - Security scanning and dependency updates
-- **Monitoring:** Open source or provider-specific tools
-- **Secrets:** Environment variables / Secret Management
+- **Hosting:** Fly.io
+- **Secrets:** Environment variables / Fly.io Secret Management
 
 > 📚 **See [GitHub Actions Guide](./docs/github-actions-guide.md) for complete CI/CD setup instructions**
 
 ## Project Structure
 
-```
+```text
 CAPS360/
 ├── backend/                 # Node.js/Express API
 │   ├── src/
@@ -83,7 +83,7 @@ CAPS360/
 │   │   ├── routes/         # API routes
 │   │   └── server.ts       # Main server file
 │   ├── tests/              # Backend tests
-│   └── Dockerfile          # Cloud Run deployment
+│   └── Dockerfile          # Fly.io deployment
 ├── frontend-web/           # React web application
 │   ├── src/
 │   │   ├── components/     # Reusable components
@@ -98,15 +98,10 @@ CAPS360/
 │   │   ├── components/     # Mobile components
 │   │   └── navigation/     # React Navigation setup
 │   └── app.json            # Expo configuration
-├── functions/              # Cloud Functions
-│   ├── trial-expiry-checker/
-│   ├── welcome-premium-expiry/
-│   ├── payfast-webhook/
-│   ├── paystack-webhook/
-│   └── notification-service/
-├── terraform/              # Infrastructure as Code
 ├── docs/                   # Documentation
-└── scripts/                # Utility scripts
+├── scripts/                # Utility scripts
+├── fly-backend.toml        # Fly.io configuration
+└── fly-frontend.toml       # Fly.io configuration
 ```
 
 ## Getting Started
@@ -114,7 +109,7 @@ CAPS360/
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Google Cloud SDK
+- [Flyctl](https://fly.io/docs/hands-on/install-flyctl/) (for deployment)
 - Docker (for local testing)
 - Expo CLI (for mobile development)
 
@@ -124,7 +119,7 @@ CAPS360/
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your GCP and API credentials
+# Edit .env with your Supabase and Gemini API credentials
 npm run dev
 ```
 
@@ -150,11 +145,11 @@ npx expo start
 
 ### Backend (.env)
 
-```
+```dotenv
 PORT=8080
 NODE_ENV=development
-GCP_PROJECT_ID=caps360
-FIRESTORE_EMULATOR_HOST=localhost:8080 # for local dev
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-supabase-anon-key
 GEMINI_API_KEY=your-gemini-api-key
 PAYFAST_MERCHANT_ID=your-payfast-merchant-id
 PAYFAST_MERCHANT_KEY=your-payfast-merchant-key
@@ -164,7 +159,7 @@ JWT_SECRET=your-jwt-secret
 
 ### Frontend (.env)
 
-```
+```dotenv
 VITE_API_URL=http://localhost:8080
 VITE_PAYSTACK_PUBLIC_KEY=your-paystack-public-key
 ```
@@ -199,11 +194,8 @@ This will:
    git push -u origin main
    ```
 
-2. **Set up GCP service account:**
-
-   ```bash
-   .\scripts\setup-github-actions.ps1
-   ```
+2. **Configure Fly.io:**
+   Ensure you have `FLY_API_TOKEN` set in your GitHub repository secrets.
 
 3. **Configure GitHub Secrets:**
    - Go to Repository → Settings → Secrets and variables → Actions
@@ -219,35 +211,19 @@ This will:
 
 Once GitHub Actions is set up, deployments happen automatically:
 
-- **Backend:** Deploys on push to `main` when `backend/**` changes
-- **Frontend:** Deploys on push to `main` when `frontend-web/**` changes
-- **Functions:** Deploys on push to `main` when `functions/**` changes
+- **Backend:** Deploys to Fly.io on push to `master` when `backend/**` or `fly-backend.toml` changes
+- **Frontend:** Deploys to Fly.io on push to `master` when `frontend-web/**` or `fly-frontend.toml` changes
 
 ### Manual Deployment
 
-### Deploy Backend to Cloud Run
+### Deploy to Fly.io
 
 ```bash
-cd backend
-gcloud run deploy caps360-api \
-  --source . \
-  --region us-central1 \
-  --allow-unauthenticated
-```
+# Backend
+flyctl deploy --config fly-backend.toml
 
-### Deploy Cloud Functions
-
-```bash
-cd functions
-./deploy-all.sh
-```
-
-### Deploy Frontend Web
-
-```bash
-cd frontend-web
-npm run build
-# Deploy to Firebase Hosting, Vercel, or Netlify
+# Frontend
+flyctl deploy --config fly-frontend.toml
 ```
 
 ## Testing

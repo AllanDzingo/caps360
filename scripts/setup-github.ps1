@@ -58,12 +58,6 @@ else {
 Write-Host ""
 Write-Host "📝 Updating configuration files..." -ForegroundColor Yellow
 
-# Update .firebaserc
-$firebaserc = Get-Content ".firebaserc" -Raw
-$firebaserc = $firebaserc -replace "YOUR_PROJECT_ID", "caps360"
-Set-Content ".firebaserc" $firebaserc
-Write-Host "   Updated .firebaserc" -ForegroundColor Gray
-
 # Update dependabot.yml
 $dependabot = Get-Content ".github\dependabot.yml" -Raw
 $dependabot = $dependabot -replace "YOUR_GITHUB_USERNAME", $GITHUB_USERNAME
@@ -104,18 +98,18 @@ Write-Host ""
 Write-Host "   git remote add origin https://github.com/$GITHUB_USERNAME/$REPO_NAME.git" -ForegroundColor White
 Write-Host "   git push -u origin main" -ForegroundColor White
 Write-Host ""
-Write-Host "3. Set up GCP service account for GitHub Actions:" -ForegroundColor Yellow
+Write-Host "3. Configure Fly.io:" -ForegroundColor Yellow
+Write-Host "   Ensure you have flyctl installed and logged in." -ForegroundColor White
 Write-Host ""
-Write-Host "   .\scripts\setup-github-actions.ps1" -ForegroundColor White
+Write-Host "   flyctl auth login" -ForegroundColor White
 Write-Host ""
 Write-Host "4. Add GitHub Secrets (see docs/github-actions-guide.md for details):" -ForegroundColor Yellow
-Write-Host "   - GCP_PROJECT_ID" -ForegroundColor White
-Write-Host "   - GCP_SA_KEY" -ForegroundColor White
-Write-Host "   - FIREBASE_SERVICE_ACCOUNT" -ForegroundColor White
-Write-Host "   - PRODUCTION_API_URL" -ForegroundColor White
+Write-Host "   - FLY_API_TOKEN" -ForegroundColor White
+Write-Host "   - SUPABASE_URL" -ForegroundColor White
+Write-Host "   - SUPABASE_ANON_KEY" -ForegroundColor White
+Write-Host "   - SUPABASE_SERVICE_ROLE_KEY" -ForegroundColor White
+Write-Host "   - GEMINI_API_KEY" -ForegroundColor White
 Write-Host "   - PAYSTACK_PUBLIC_KEY" -ForegroundColor White
-Write-Host ""
-Write-Host "5. Update .firebaserc with your actual GCP project ID" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "📚 Full documentation: docs/github-actions-guide.md" -ForegroundColor Cyan
 Write-Host ""

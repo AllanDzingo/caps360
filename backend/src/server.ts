@@ -62,7 +62,7 @@ app.use('/api', (req, res, next) => {
     return apiLimiter(req, res, next);
 });
 
-// Health check endpoint (for Cloud Run)
+// Health check endpoint (for Fly.io)
 app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
