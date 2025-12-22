@@ -45,10 +45,6 @@ terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/.terraform.lock.hcl
 
-# GCP
-service-account-key.json
-gcp-credentials.json
-
 # Temporary files
 tmp/
 temp/

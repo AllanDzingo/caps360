@@ -6,8 +6,11 @@ services:
       dockerfile: Dockerfile
     image: caps360-backend:local
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=8080
+      - SUPABASE_URL=https://uldvvywrnbzlqdtnmpyk.supabase.co
+      - SUPABASE_ANON_KEY=sb_publishable_xv62FtlS3pwSH8clF39pMw_wZF3WG7c
+      - JWT_SECRET=sb_secret_02tZWH7CJvPYBJUlXr3svA_yrZd39t7
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -17,6 +20,10 @@ services:
       context: ./frontend-web
       dockerfile: Dockerfile
     image: caps360-frontend:local
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - VITE_SUPABASE_URL=https://uldvvywrnbzlqdtnmpyk.supabase.co
+      - VITE_SUPABASE_ANON_KEY=sb_publishable_xv62FtlS3pwSH8clF39pMw_wZF3WG7c
     ports:
       - "3000:80"
     restart: unless-stopped
