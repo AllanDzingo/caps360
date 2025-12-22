@@ -20,12 +20,12 @@ jobs:
 
       - name: Deploy backend to Fly
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_BACKEND_API_TOKEN }}
         run: |
           flyctl deploy -a caps360-backend --config fly-backend.toml
 
       - name: Deploy frontend to Fly
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_FRONTEND_API_TOKEN }}
         run: |
           flyctl deploy -a caps360-frontend --config fly-frontend.toml
