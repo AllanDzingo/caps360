@@ -5,10 +5,19 @@ const supabaseUrl = runtimeEnv?.VITE_SUPABASE_URL || ((import.meta as any)['env'
 const supabaseAnonKey = runtimeEnv?.VITE_SUPABASE_ANON_KEY || ((import.meta as any)['env']?.VITE_SUPABASE_ANON_KEY);
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase URL or Anon Key is missing. Check your environment variables.');
+    console.error('CRITICAL: Supabase URL or Anon Key is missing. Check your environment variables.');
+    console.error('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
+    console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing');
 }
 
+// Prevent crash if keys are missing, but requests will fail
 export const supabase = createClient(
-    supabaseUrl || '',
-    supabaseAnonKey || ''
+    supabaseUrl || 'https://placeholder.supabase.co',
+    supabaseAnonKey || 'placeholder',
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+        },
+    }
 );
