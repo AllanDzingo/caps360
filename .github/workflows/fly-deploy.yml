@@ -14,7 +14,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install flyctl
-        uses: superfly/flyctl-actions@v1
+        run: |
+          curl -L https://fly.io/install.sh | sh
+          export FLYCTL_INSTALL="$HOME/.fly"
+          export PATH="$FLYCTL_INSTALL/bin:$PATH"
 
       - name: Deploy backend to Fly
         env:
