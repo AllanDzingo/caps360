@@ -21,7 +21,7 @@ jobs:
 
       - name: Deploy backend to Fly
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.fly_backend_api_token }}
         run: |
           export FLYCTL_INSTALL="$HOME/.fly"
           export PATH="$FLYCTL_INSTALL/bin:$PATH"
@@ -29,7 +29,7 @@ jobs:
 
       - name: Deploy frontend to Fly
         env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.fly_frontend_api_token }}
         run: |
           export FLYCTL_INSTALL="$HOME/.fly"
           export PATH="$FLYCTL_INSTALL/bin:$PATH"
