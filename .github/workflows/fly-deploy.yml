@@ -29,9 +29,10 @@ jobs:
           flyctl deploy --config ../fly-backend.toml --no-cache
 
       - name: Deploy frontend to Fly
+        working-directory: frontend-web
         env:
           FLY_API_TOKEN: ${{ secrets.fly_frontend_api_token }}
         run: |
           export FLYCTL_INSTALL="$HOME/.fly"
           export PATH="$FLYCTL_INSTALL/bin:$PATH"
-          flyctl deploy -a caps360-frontend --config fly-frontend.toml
+          flyctl deploy --config ../fly-frontend.toml
