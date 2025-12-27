@@ -15,8 +15,6 @@ jobs:
 
       - name: Install flyctl
         uses: superfly/flyctl-actions@v1
-        with:
-          version: 'stable'
 
       - name: Deploy backend to Fly
         env:
