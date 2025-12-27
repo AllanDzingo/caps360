@@ -4,7 +4,7 @@ primary_region = "iad"
 
 [build]
   dockerfile = "frontend-web/Dockerfile"
-  context = "."
+  context = "frontend-web"
 
 [http_service]
   internal_port = 80
