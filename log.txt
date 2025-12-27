@@ -1,0 +1,34 @@
+﻿
+
+    Directory: C:\Users\Hanco Sipsma\Desktop\Allan 
+    2025\CAPS360\frontend-web
+
+
+Mode                 LastWriteTime         Length Name            
+----                 -------------         ------ ----            
+d-----        12/22/2025  10:49 AM                dist            
+d-----        12/20/2025   9:15 AM                node_modules    
+d-----        12/22/2025  10:45 AM                public          
+d-----        12/14/2025   8:47 PM                src             
+-a----        12/10/2025   3:24 PM             56 .dockerignore   
+-a----        12/21/2025   4:37 PM            218 .env            
+-a----         12/9/2025   3:39 PM            559 .eslintrc.cjs   
+-a----        12/22/2025   8:25 AM            609 docker-entrypoin
+                                                  t.sh            
+-a----        12/22/2025   8:25 AM            530 Dockerfile      
+-a----        12/10/2025   7:28 PM            379 fly.toml        
+-a----        12/22/2025  10:46 AM            886 index.html      
+-a----        12/10/2025   7:28 PM           1101 nginx.conf      
+-a----        12/20/2025   9:15 AM         260653 package-lock.jso
+                                                  n               
+-a----        12/20/2025   9:15 AM           1539 package.json    
+-a----        12/10/2025   6:03 PM             98 postcss.config.j
+                                                  s               
+-a----         12/9/2025   3:36 PM           1467 tailwind.config.
+                                                  js              
+-a----        12/10/2025   6:02 PM            953 tsconfig.json   
+-a----         12/9/2025   3:36 PM            263 tsconfig.node.js
+                                                  on              
+-a----         12/9/2025   3:36 PM            476 vite.config.ts  
+
+

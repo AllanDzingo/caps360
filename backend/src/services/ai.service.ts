@@ -15,8 +15,7 @@ export class AIService {
     constructor() {
         this.genAI = new GoogleGenerativeAI(config.ai.geminiApiKey);
         this.model = this.genAI.getGenerativeModel({ model: config.ai.model });
-        // Cache AI responses for 1 hour
-        this.cache = new NodeCache({ stdTTL: 3600 });
+        this.cache = new NodeCache({ stdTTL: 3600 }); // 1 hour cache
     }
 
     /**
@@ -32,12 +31,15 @@ export class AIService {
             let conversation: AIConversation;
 
             if (conversationId) {
-                // Load existing conversation
-                const { data, error } = await supabase
+                const { data, error: dbError } = await supabase
                     .from(Tables.AI_CONVERSATIONS)
                     .select('*')
                     .eq('id', conversationId)
                     .single();
+
+                if (dbError) {
+                    logger.warn(`Failed to load conversation ${conversationId}`, dbError);
+                }
 
                 if (data) {
                     conversation = this.mapDbConversationToModel(data);
@@ -48,20 +50,20 @@ export class AIService {
                 conversation = this.createNewConversation(userId);
             }
 
-            // Build conversation history
             const history = conversation.messages.map(msg => ({
                 role: msg.role,
                 parts: [{ text: msg.content }],
             }));
 
-            // Add system context
             const systemPrompt = this.buildTutorSystemPrompt(lessonContext);
 
-            // Generate response
             const chat = this.model.startChat({
                 history: [
                     { role: 'user', parts: [{ text: systemPrompt }] },
-                    { role: 'model', parts: [{ text: 'I understand. I will act as a helpful CAPS-aligned tutor.' }] },
+                    {
+                        role: 'model',
+                        parts: [{ text: 'I understand. I will act as a helpful CAPS-aligned tutor.' }],
+                    },
                     ...history,
                 ],
             });
@@ -69,7 +71,6 @@ export class AIService {
             const result = await chat.sendMessage(message);
             const response = result.response.text();
 
-            // Add messages to conversation
             const userMessage: AIMessage = {
                 id: uuidv4(),
                 role: 'user',
@@ -87,11 +88,10 @@ export class AIService {
             conversation.messages.push(userMessage, assistantMessage);
             conversation.updatedAt = new Date();
 
-            // Save conversation (Upsert)
             const dbConversation = {
                 id: conversation.id,
                 user_id: conversation.userId,
-                messages: conversation.messages, // Assuming Supabase handles JSONB
+                messages: conversation.messages,
                 created_at: conversation.createdAt.toISOString(),
                 updated_at: conversation.updatedAt.toISOString(),
             };
@@ -104,14 +104,14 @@ export class AIService {
                 throw new Error(`Supabase error: ${saveError.message}`);
             }
 
-            logger.info(`AI chat: user ${userId}, conversation ${conversation.id}`);
+            logger.info(`AI chat success: user=${userId}, conversation=${conversation.id}`);
 
             return {
                 response,
                 conversationId: conversation.id,
             };
         } catch (error) {
-            logger.error('AI chat error:', error);
+            logger.error('AI chat error', error);
             throw error;
         }
     }
@@ -127,7 +127,7 @@ export class AIService {
     }
 
     /**
-     * Quiz Generator - Generate CAPS-aligned quizzes
+     * Quiz Generator - CAPS-aligned quizzes
      */
     async generateQuiz(
         userId: string,
@@ -137,7 +137,6 @@ export class AIService {
         numQuestions: number = 10
     ): Promise<Quiz> {
         try {
-            // Check cache
             const cacheKey = `quiz_${grade}_${subject}_${lessonContent.substring(0, 50)}`;
             const cached = this.cache.get<Quiz>(cacheKey);
             if (cached) {
@@ -146,7 +145,7 @@ export class AIService {
             }
 
             const prompt = `
-You are a South African CAPS curriculum expert. Generate a quiz with ${numQuestions} multiple-choice questions based on the following lesson content.
+You are a South African CAPS curriculum expert. Generate a quiz with ${numQuestions} multiple-choice questions.
 
 Grade: ${grade}
 Subject: ${subject}
@@ -154,43 +153,21 @@ Subject: ${subject}
 Lesson Content:
 ${lessonContent}
 
-Requirements:
-- Questions must be aligned with CAPS curriculum standards
-- Each question should have 4 options
-- Provide the correct answer index (0-3)
-- Include a brief explanation for each answer
-- Assign points to each question (1-5 based on difficulty)
-
-Return the quiz in the following JSON format:
-{
-  "title": "Quiz title",
-  "questions": [
-    {
-      "question": "Question text",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-      "correctAnswer": 0,
-      "explanation": "Why this is correct",
-      "points": 2
-    }
-  ]
-}
+Return valid JSON only.
 `;
 
             const result = await this.model.generateContent(prompt);
             const responseText = result.response.text();
 
-            // Parse JSON response
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
-                throw new Error('Failed to parse quiz JSON from AI response');
+                throw new Error('Failed to parse quiz JSON');
             }
 
             const quizData = JSON.parse(jsonMatch[0]);
 
-            // Create quiz object
-            const quizId = uuidv4();
             const quiz: Quiz = {
-                id: quizId,
+                id: uuidv4(),
                 title: quizData.title,
                 questions: quizData.questions.map((q: any) => ({
                     id: uuidv4(),
@@ -209,40 +186,37 @@ Return the quiz in the following JSON format:
                 updatedAt: new Date(),
             };
 
-            const dbQuiz = {
-                id: quiz.id,
-                title: quiz.title,
-                questions: quiz.questions, // JSONB
-                total_questions: quiz.totalQuestions,
-                passing_score: quiz.passingScore,
-                access_tier: quiz.accessTier,
-                ai_generated: quiz.aiGenerated,
-                generated_by: quiz.generatedBy,
-                created_at: quiz.createdAt.toISOString(),
-                updated_at: quiz.updatedAt.toISOString(),
-            };
-
-            // Save to Supabase
-            const { error } = await supabase
+            const { error: insertError } = await supabase
                 .from(Tables.QUIZZES)
-                .insert(dbQuiz);
+                .insert({
+                    id: quiz.id,
+                    title: quiz.title,
+                    questions: quiz.questions,
+                    total_questions: quiz.totalQuestions,
+                    passing_score: quiz.passingScore,
+                    access_tier: quiz.accessTier,
+                    ai_generated: quiz.aiGenerated,
+                    generated_by: quiz.generatedBy,
+                    created_at: quiz.createdAt.toISOString(),
+                    updated_at: quiz.updatedAt.toISOString(),
+                });
 
-            if (error) throw new Error(`Supabase error: ${error.message}`);
+            if (insertError) {
+                throw new Error(`Supabase error: ${insertError.message}`);
+            }
 
-            // Cache the quiz
             this.cache.set(cacheKey, quiz);
-
-            logger.info(`Quiz generated: ${quizId} for user ${userId}`);
+            logger.info(`Quiz generated: ${quiz.id}`);
 
             return quiz;
         } catch (error) {
-            logger.error('Quiz generation error:', error);
+            logger.error('Quiz generation error', error);
             throw error;
         }
     }
 
     /**
-     * Marking Assistant - Grade assignments with feedback
+     * Assignment Marking
      */
     async gradeAssignment(
         assignmentText: string,
@@ -251,126 +225,74 @@ Return the quiz in the following JSON format:
     ): Promise<{ score: number; feedback: string }> {
         try {
             const prompt = `
-You are an experienced South African teacher grading student assignments according to CAPS standards.
+Grade this assignment using CAPS standards.
 
-Assignment Submission:
+Assignment:
 ${assignmentText}
 
-Grading Rubric:
+Rubric:
 ${rubric}
 
-Maximum Score: ${maxScore}
+Max Score: ${maxScore}
 
-Please:
-1. Grade the assignment out of ${maxScore} points
-2. Provide detailed, constructive feedback
-3. Highlight strengths and areas for improvement
-4. Be encouraging and supportive
-
-Return your response in the following JSON format:
-{
-  "score": <number>,
-  "feedback": "<detailed feedback>"
-}
+Return JSON only.
 `;
 
             const result = await this.model.generateContent(prompt);
             const responseText = result.response.text();
 
-            // Parse JSON response
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (!jsonMatch) {
-                throw new Error('Failed to parse grading JSON from AI response');
+                throw new Error('Failed to parse grading JSON');
             }
 
-            const grading = JSON.parse(jsonMatch[0]);
-
-            logger.info(`Assignment graded: score ${grading.score}/${maxScore}`);
-
-            return grading;
+            return JSON.parse(jsonMatch[0]);
         } catch (error) {
-            logger.error('Assignment grading error:', error);
+            logger.error('Assignment grading error', error);
             throw error;
         }
     }
 
     /**
-     * Curriculum Planner - Create lesson plans for teachers
+     * Lesson Plan Generator
      */
     async generateLessonPlan(
         grade: number,
         subject: string,
         topic: string,
-        duration: number // in minutes
+        duration: number
     ): Promise<string> {
         try {
             const prompt = `
-You are a South African curriculum planning expert specializing in CAPS-aligned lesson plans.
+Create a CAPS-aligned lesson plan.
 
-Create a detailed lesson plan with the following parameters:
-- Grade: ${grade}
-- Subject: ${subject}
-- Topic: ${topic}
-- Duration: ${duration} minutes
-
-The lesson plan should include:
-1. Learning objectives (aligned with CAPS)
-2. Required materials
-3. Introduction/Hook (5-10 minutes)
-4. Main teaching activities with time allocations
-5. Assessment strategies
-6. Differentiation for diverse learners
-7. Homework/Extension activities
-8. Reflection questions
-
-Format the lesson plan in a clear, structured manner.
+Grade: ${grade}
+Subject: ${subject}
+Topic: ${topic}
+Duration: ${duration} minutes
 `;
 
             const result = await this.model.generateContent(prompt);
-            const lessonPlan = result.response.text();
-
-            logger.info(`Lesson plan generated: Grade ${grade}, ${subject}, ${topic}`);
-
-            return lessonPlan;
+            return result.response.text();
         } catch (error) {
-            logger.error('Lesson plan generation error:', error);
+            logger.error('Lesson plan generation error', error);
             throw error;
         }
     }
 
-    /**
-     * Build system prompt for AI tutor
-     */
     private buildTutorSystemPrompt(lessonContext?: string): string {
         let prompt = `
-You are a helpful, patient, and knowledgeable AI tutor for South African students. 
-You specialize in the CAPS (Curriculum and Assessment Policy Statement) curriculum.
-
-Your role is to:
-- Answer student questions clearly and accurately
-- Provide step-by-step explanations
-- Use examples relevant to South African context
-- Encourage critical thinking
-- Be supportive and motivating
-- Use age-appropriate language
-
-Guidelines:
-- Never give direct answers to homework/test questions
-- Guide students to discover answers themselves
-- Use the Socratic method when appropriate
-- Celebrate student progress
+You are a CAPS-aligned South African AI tutor.
+Be supportive, clear, and age-appropriate.
 `;
 
         if (lessonContext) {
-            prompt += `\n\nCurrent Lesson Context:\n${lessonContext}`;
+            prompt += `\nLesson Context:\n${lessonContext}`;
         }
 
         return prompt;
     }
 
-    /**
-     * Create new conversation
-     */
     private createNewConversation(userId: string): AIConversation {
         return {
             id: uuidv4(),

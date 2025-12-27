@@ -98,7 +98,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // Start server
-const PORT = config.port;
+const PORT = Number(process.env.PORT) || Number(config.port) || 8080;
 
 // Check database connection
 async function checkDatabaseConnection() {
@@ -115,11 +115,14 @@ async function checkDatabaseConnection() {
     }
 }
 
-app.listen(PORT, '0.0.0.0', async () => {
+app.listen(PORT, '0.0.0.0', () => {
     logger.info(`🚀 CAPS360 API server running on port ${PORT}`);
     logger.info(`Environment: ${config.nodeEnv}`);
 
-    await checkDatabaseConnection();
+    // Fire-and-forget DB check
+    checkDatabaseConnection().catch(err => {
+        logger.error('Database check failed:', err);
+    });
 });
 
 export default app;

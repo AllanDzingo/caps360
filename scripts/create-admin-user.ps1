@@ -1,158 +1,71 @@
+# PowerShell script to create the initial admin user for CAPS360
+# This script invokes the backend functionality to create the user in Supabase
 
+param (
+  [string]$email,
+  [string]$password
+)
 
-# CAPS360 - Create Admin User
-# This script creates an admin user in Supabase
+try {
+  Write-Host "`n=== Creating Initial Admin User ===" -ForegroundColor Cyan
 
-Write-Host "👤 CAPS360 - Create Admin User (Supabase)" -ForegroundColor Cyan
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host ""
+  # Prompt for admin credentials if not provided
+  if (-not $email) {
+    if ($env:ADMIN_EMAIL) {
+      $email = $env:ADMIN_EMAIL
+    }
+    else {
+      $email = Read-Host "Enter admin email (default: admin@caps360.co.za)"
+      if (-not $email) { $email = "admin@caps360.co.za" }
+    }
+  }
+  if (-not $password) {
+    if ($env:ADMIN_PASSWORD) {
+      $password = $env:ADMIN_PASSWORD
+    }
+    else {
+      $passSecure = Read-Host "Enter admin password" -AsSecureString
+      $password = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($passSecure))
+    }
+  }
+  
+  # Also save to file for record keeping (as per original script intent)
+  $credentialsFile = "ADMIN_CREDENTIALS.txt"
+  $content = "Email: $email`nPassword: $password"
+  Set-Content -Path $credentialsFile -Value $content
+  Write-Host "`n[INFO] Admin credentials backed up to $credentialsFile" -ForegroundColor Yellow
 
-# Get admin details
-Write-Host "Enter admin user details:" -ForegroundColor Yellow
-Write-Host ""
-
-$adminEmail = Read-Host "Email address"
-$adminPassword = Read-Host "Password" -AsSecureString
-$adminName = Read-Host "Full name"
-
-if ([string]::IsNullOrWhiteSpace($adminEmail) -or [string]::IsNullOrWhiteSpace($adminName)) {
-  Write-Host "❌ Email and name are required" -ForegroundColor Red
-  exit 1
-}
-
-# Convert secure string to plain text
-$BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPassword)
-$plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-
-Write-Host ""
-Write-Host "Creating admin user..." -ForegroundColor Yellow
-
-# Create a temporary TS script to create the admin user
-$createUserScript = @"
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcryptjs';
-import { supabaseAdmin, Tables } from './src/config/supabase';
-import { UserRole, SubscriptionTier } from './src/models/user.model';
-
-async function createAdminUser() {
-  if (!supabaseAdmin) {
-      console.error('❌ Supabase Admin client not initialized. Check SUPABASE_SERVICE_ROLE_KEY.');
-      process.exit(1);
+  # Navigate to backend to run the script
+  Write-Host "`n[INFO] Invoking backend creation script..." -ForegroundColor Cyan
+  
+  $backendDir = Join-Path $PSScriptRoot "..\backend"
+  if (-not (Test-Path $backendDir)) {
+    throw "Backend directory not found at $backendDir"
   }
 
-  try {
-    const email = '$adminEmail'.toLowerCase();
-    
-    // Check if user exists
-    const { data: existingUser } = await supabaseAdmin
-        .from(Tables.USERS)
-        .select('id')
-        .eq('email', email)
-        .single();
-        
-    if (existingUser) {
-        console.error('❌ User with this email already exists.');
-        process.exit(1);
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash('$plainPassword', 10);
-    
-    const userId = uuidv4();
-    const now = new Date().toISOString();
-    
-    // Split name
-    const nameParts = '$adminName'.split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    const dbUser = {
-        id: userId,
-        email: email,
-        password_hash: passwordHash,
-        first_name: firstName,
-        last_name: lastName,
-        role: UserRole.ADMIN,
-        current_tier: SubscriptionTier.PREMIUM,
-        trial_premium: false,
-        welcome_premium: false,
-        created_at: now,
-        updated_at: now
-    };
-
-    const { error } = await supabaseAdmin
-        .from(Tables.USERS)
-        .insert(dbUser);
-    
-    if (error) {
-        throw new Error(error.message);
-    }
-    
-    console.log('✅ Admin user created successfully!');
-    console.log('User ID:', userId);
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error creating admin user:', error);
-    process.exit(1);
+  Push-Location $backendDir
+  
+  # Set env vars for the node process
+  $env:ADMIN_EMAIL = $email
+  $env:ADMIN_PASSWORD = $password
+  
+  # Run the backend script using npx tsx
+  # We assume environment variables (.env) are already set up in backend or will be picked up
+  # If backend .env is missing, this might fail, but let's assume it's there as per previous context
+  
+  cmd /c "npx tsx create-admin-direct.ts"
+  
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "`n[SUCCESS] Admin user creation process completed." -ForegroundColor Green
   }
+  else {
+    Write-Host "`n[ERROR] Backend script failed with exit code $LASTEXITCODE" -ForegroundColor Red
+  }
+
 }
-
-createAdminUser();
-"@
-
-# Save script temporarily in backend folder
-$scriptPath = "backend\create-admin-temp.ts"
-Set-Content $scriptPath $createUserScript
-
-# Run the script using tsx
-Push-Location backend
-# Ensure environment variables are loaded if needed, though config/index.ts should handle .env if present
-# But we might be running this from outside the context where .env is auto-loaded by simple node, 
-# 'tsx' usually doesn't auto-load .env unless configured.
-# We will rely on backend/src/config/index.ts calling dotenv.config()
-
-npx tsx create-admin-temp.ts
-
-if ($LASTEXITCODE -eq 0) {
-  Write-Host ""
-  Write-Host "✅ Admin user created successfully!" -ForegroundColor Green
-  Write-Host ""
-  Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
-  Write-Host "📋 Admin Credentials" -ForegroundColor Cyan
-  Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
-  Write-Host ""
-  Write-Host "   Email:    $adminEmail" -ForegroundColor White
-  Write-Host "   Password: $plainPassword" -ForegroundColor White
-  Write-Host "   Role:     Admin" -ForegroundColor White
-  Write-Host ""
-  Write-Host "⚠️  Save these credentials securely!" -ForegroundColor Red
-  Write-Host ""
-    
-  # Save credentials to file
-  $credentialsFile = @"
-# CAPS360 Admin Credentials
-Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-
-Email: $adminEmail
-Password: $plainPassword
-Role: Admin
-
-⚠️  KEEP THIS FILE SECURE - DELETE AFTER SAVING CREDENTIALS
-"@
-    
-  Set-Content "..\ADMIN_CREDENTIALS.txt" $credentialsFile
-  Write-Host "📄 Credentials saved to ADMIN_CREDENTIALS.txt" -ForegroundColor Gray
-  Write-Host ""
+catch {
+  Write-Host "`n[ERROR] Script failed: $_" -ForegroundColor Red
 }
-else {
-  Write-Host ""
-  Write-Host "❌ Failed to create admin user" -ForegroundColor Red
+finally {
+  Pop-Location
 }
-
-# Clean up
-Remove-Item "create-admin-temp.ts" -ErrorAction SilentlyContinue
-Pop-Location
-
-Write-Host ""
-Write-Host "To verify, try logging in at the frontend." -ForegroundColor Green
-Write-Host ""

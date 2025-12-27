@@ -1,0 +1,37 @@
+# Server Configuration
+PORT=8080
+NODE_ENV=development
+
+# AI Configuration
+GEMINI_API_KEY=AIzaSyCHvttgREd6Ru6hOuAwD6QzQqO6oKiL_nE
+GEMINI_MODEL=gemini-1.5-flash
+
+# Authentication
+JWT_SECRET=sb_secret_02tZWH7CJvPYBJUlXr3svA_yrZd39t7
+JWT_EXPIRES_IN=7d
+
+# Supabase Configuration
+SUPABASE_URL=https://uldvvywrnbzlqdtnmpyk.supabase.co
+SUPABASE_ANON_KEY=sb_publishable_xv62FtlS3pwSH8clF39pMw_wZF3WG7c
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsZHZ2eXdybmJ6bHFkdG5tcHlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTM2OTM5MiwiZXhwIjoyMDgwOTQ1MzkyfQ.4P0foNODgnvarlViN2QCI0zVpofvYH11o4BymFfKlds
+
+
+# Paystack Configuration
+PAYSTACK_SECRET_KEY=sk_test_66adb4c5bab09c5be7d2cbd1e75cbe0a53707ac0
+PAYSTACK_PUBLIC_KEY=pk_test_3587a53505a00ddc9e83a70031d8b04cc29228cb
+
+# Subscription Plans (in cents)
+STUDY_HELP_PRICE=3900
+STANDARD_PRICE=9900
+PREMIUM_PRICE=14900
+
+# Trial Configuration
+TRIAL_DURATION_DAYS=14
+WELCOME_PREMIUM_DAYS=14
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+
+# Logging
+LOG_LEVEL=info

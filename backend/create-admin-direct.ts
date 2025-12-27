@@ -6,13 +6,13 @@ import { UserRole, SubscriptionTier } from './src/models/user.model';
 async function createAdminUser() {
     console.log('--- STARTING ADMIN CREATION ---');
     if (!supabaseAdmin) {
-        console.error('❌ Supabase Admin client not initialized.');
+        console.error('[ERROR] Supabase Admin client not initialized.');
         process.exit(1);
     }
 
     try {
-        const email = 'admin@caps360.co.za';
-        const password = 'AdminPassword123!';
+        const email = process.env.ADMIN_EMAIL || 'admin@caps360.co.za';
+        const password = process.env.ADMIN_PASSWORD || 'AdminPassword123!';
         const firstName = 'Admin';
         const lastName = 'User';
 
@@ -56,10 +56,10 @@ async function createAdminUser() {
             throw new Error(error.message);
         }
 
-        console.log('✅ Admin user created successfully!');
+        console.log('[SUCCESS] Admin user created successfully!');
         process.exit(0);
     } catch (error) {
-        console.error('❌ Error:', error);
+        console.error('[ERROR] Error:', error);
         process.exit(1);
     }
 }
