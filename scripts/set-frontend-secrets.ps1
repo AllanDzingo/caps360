@@ -1,4 +1,5 @@
 # PowerShell script to set frontend build-time environment variables on Fly.io
+# Trigger CI: dummy comment for diagnostics
 # Run this before deploying the frontend
 
 # Robustly determine script directory
