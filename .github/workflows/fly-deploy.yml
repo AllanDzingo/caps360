@@ -25,7 +25,7 @@ jobs:
         run: |
           export FLYCTL_INSTALL="$HOME/.fly"
           export PATH="$FLYCTL_INSTALL/bin:$PATH"
-          flyctl deploy -a caps360-backend --config fly-backend.toml
+          flyctl deploy -a caps360-backend --config fly-backend.toml --no-cache
 
       - name: Deploy frontend to Fly
         env:
