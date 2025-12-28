@@ -6,6 +6,14 @@ import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { useAuthStore } from './store/authStore';
+import WhatCAPS360Offers from './pages/WhatCAPS360Offers';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import RefundPolicy from './pages/RefundPolicy';
+import FAQs from './pages/FAQs';
+import ServiceDeliveryPolicy from './pages/ServiceDeliveryPolicy';
+import ContactUs from './pages/ContactUs';
+import Footer from './components/Footer';
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -59,8 +67,16 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route path="/what-caps360-offers" element={<WhatCAPS360Offers />} />
+                        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                        <Route path="/refund-policy" element={<RefundPolicy />} />
+                        <Route path="/faqs" element={<FAQs />} />
+                        <Route path="/service-delivery-policy" element={<ServiceDeliveryPolicy />} />
+                        <Route path="/contact-us" element={<ContactUs />} />
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
+                    <Footer />
                 </div>
             </BrowserRouter>
         </QueryClientProvider>

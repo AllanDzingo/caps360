@@ -106,6 +106,22 @@ export const LandingPage: React.FC = () => {
             {/* Pricing Section */}
             <PricingSection />
 
+            {/* Compliance: What CAPS360 Offers Section */}
+            <section className="py-12 bg-gray-50 border-t">
+                <div className="container mx-auto px-4 text-center">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-4 text-brand-blue">What CAPS360 Offers</h2>
+                    <p className="text-lg mb-2 text-gray-700">
+                        CAPS360 is a digital education platform for learners, parents, and tutors. We provide curriculum-aligned content, AI-powered support, and digital learning resources.
+                    </p>
+                    <ul className="list-disc pl-6 mb-4 text-gray-700 text-left max-w-2xl mx-auto">
+                        <li>Digital educational services and resources</li>
+                        <li>Subscription or once-off payments for premium features</li>
+                        <li>No physical shipping – all services are delivered online</li>
+                    </ul>
+                    <Link to="/what-caps360-offers" className="text-brand-blue underline hover:text-brand-teal">Read full details</Link>
+                </div>
+            </section>
+
             {/* CTA Section */}
             <section className="py-20 bg-gradient-to-r from-brand-blue to-brand-teal text-white">
                 <div className="container mx-auto px-4 text-center">
