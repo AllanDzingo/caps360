@@ -12,14 +12,24 @@ export const config = {
     },
 
     ai: {
-        geminiApiKey: process.env.GEMINI_API_KEY || '',
-        model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+        azure: {
+            endpoint: process.env.AZURE_OPENAI_ENDPOINT || '',
+            apiKey: process.env.AZURE_OPENAI_API_KEY || '',
+            deployment: process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o-mini',
+            apiVersion: '2024-12-01-preview'
+        }
     },
 
-    supabase: {
-        url: process.env.SUPABASE_URL || 'https://uldvvywrnbzlqdtnmpyk.supabase.co',
-        anonKey: process.env.SUPABASE_ANON_KEY || 'sb_publishable_xv62FtlS3pwSH8clF39pMw_wZF3WG7c',
-        serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+    // Supabase config removed for Azure migration
+
+
+    database: {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432', 10),
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        name: process.env.DB_NAME || 'caps360',
+        ssl: process.env.DB_SSL === 'true',
     },
 
     payfast: {

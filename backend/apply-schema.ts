@@ -2,8 +2,11 @@ import { Client } from 'pg';
 import fs from 'fs';
 import path from 'path';
 
-// Connection string from user input
-const connectionString = 'postgresql://postgres:Dzingo.33636@db.uldvvywrnbzlqdtnmpyk.supabase.co:5432/postgres';
+// Connection string from environment variable
+const connectionString = process.env.DATABASE_URL || '';
+if (!connectionString) {
+    throw new Error('DATABASE_URL environment variable is required.');
+}
 
 async function applySchema() {
     console.log('--- APPLYING SCHEMA ---');

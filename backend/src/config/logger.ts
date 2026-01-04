@@ -19,7 +19,7 @@ const logger = winston.createLogger({
     ],
 });
 
-// In production, log to console as JSON for better log parsing by hosting providers (Fly.io, etc.)
+// In production, log to console as JSON for better log parsing by hosting providers (Azure, etc.)
 if (config.nodeEnv === 'production') {
     logger.add(
         new winston.transports.Console({

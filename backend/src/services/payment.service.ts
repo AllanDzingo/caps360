@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase, Tables } from '../config/supabase';
+import { query } from '../config/database';
 import config from '../config';
 import logger from '../config/logger';
 import { PaymentRecord } from '../models/analytics.model';
@@ -201,13 +201,19 @@ export class PaymentService {
                 updated_at: payment.updatedAt.toISOString(),
             };
 
-            const { error } = await supabase
-                .from(Tables.PAYMENTS)
-                .insert(dbPayment);
+            const sql = `
+                INSERT INTO payments (
+                    id, user_id, provider, amount, currency, status, metadata, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            `;
 
-            if (error) {
-                throw new Error(`Supabase error: ${error.message}`);
-            }
+            const values = [
+                dbPayment.id, dbPayment.user_id, dbPayment.provider, dbPayment.amount,
+                dbPayment.currency, dbPayment.status, dbPayment.metadata,
+                dbPayment.created_at, dbPayment.updated_at
+            ];
+
+            await query(sql, values);
 
             logger.info(`Payment recorded: ${paymentId} (${provider}, ${status})`);
 

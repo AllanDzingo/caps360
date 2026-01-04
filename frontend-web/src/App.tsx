@@ -24,29 +24,15 @@ const queryClient = new QueryClient({
     },
 });
 
+import { DashboardPage } from './pages/DashboardPage';
+import { SubjectView } from './pages/SubjectView';
+import { QuizPlayer } from './components/QuizPlayer';
+// ... previous imports
+
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuthStore();
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-};
-
-// Placeholder Dashboard
-const DashboardPage: React.FC = () => {
-    const { user } = useAuthStore();
-    return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-4">Welcome, {user?.firstName}!</h1>
-            <p className="text-gray-600">
-                Your tier: <span className="font-semibold capitalize">{user?.effectiveTier.replace('_', ' ')}</span>
-            </p>
-            {user?.trialPremium && (
-                <p className="text-purple-600 mt-2">🎉 You're on a free trial until {user.trialEndDate}</p>
-            )}
-            {user?.welcomePremium && (
-                <p className="text-yellow-600 mt-2">✨ Welcome Premium active until {user.welcomePremiumEndDate}</p>
-            )}
-        </div>
-    );
 };
 
 function App() {
@@ -64,6 +50,22 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <DashboardPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/subjects/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <SubjectView />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/quiz/:lessonId"
+                            element={
+                                <ProtectedRoute>
+                                    <QuizPlayer />
                                 </ProtectedRoute>
                             }
                         />

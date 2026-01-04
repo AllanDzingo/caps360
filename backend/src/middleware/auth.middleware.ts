@@ -27,20 +27,18 @@ export const authenticate = async (
 
         const token = authHeader.substring(7);
 
-        // Verify token (Supabase JWTs are signed with the Supabase JWT secret)
+        // Verify token
         const secret = config.jwt.secret;
         let decoded: any;
 
         try {
             decoded = jwt.verify(token, secret);
         } catch (err) {
-            // If local secret fails, log it and fail - we should ensure config.jwt.secret is set to the Supabase JWT secret
             logger.error('JWT Verification failed:', err);
             throw new Error('Invalid or expired token');
         }
 
-        // Supabase JWTs have 'sub' as the user ID
-        const userId = decoded.sub || decoded.userId;
+        const userId = decoded.userId || decoded.sub;
 
         if (!userId) {
             res.status(401).json({ error: 'Invalid token payload' });

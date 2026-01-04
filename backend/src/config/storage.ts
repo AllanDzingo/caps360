@@ -1,61 +1,17 @@
-import { supabase } from './supabase';
-import logger from './logger';
+// import { supabase } from './supabase'; // Removed
 
-/**
- * Upload file to Supabase Storage
- */
-export const uploadFile = async (
-    bucketName: string,
-    path: string,
-    file: Buffer,
-    contentType: string
-): Promise<string> => {
-    try {
-        const { data, error } = await supabase.storage
-            .from(bucketName)
-            .upload(path, file, {
-                contentType,
-                cacheControl: '3600',
-                upsert: true,
-            });
+// Supabase storage deprecated. Use Azure Blob Storage in future.
+// TODO: Implement Azure Blob Storage integration.
 
-        if (error) {
-            throw error;
-        }
-
-        return data.path;
-    } catch (error) {
-        logger.error('Supabase upload error:', error);
-        throw error;
-    }
+export const uploadFile = async (..._args: any[]) => {
+    // console.warn('Supabase storage deprecated. Use Azure Blob Storage.');
+    return 'https://placeholder-url.com/file.jpg';
 };
 
-/**
- * Generate a signed URL for secure file access
- */
-export const generateSignedUrl = async (
-    bucketName: string,
-    path: string,
-    expiresInMinutes: number = 60
-): Promise<string> => {
-    try {
-        const { data, error } = await supabase.storage
-            .from(bucketName)
-            .createSignedUrl(path, expiresInMinutes * 60);
-
-        if (error) {
-            throw error;
-        }
-
-        return data.signedUrl;
-    } catch (error) {
-        logger.error('Supabase signed URL error:', error);
-        // Fallback or rethrow
-        return '';
-    }
+export const generateSignedUrl = async (..._args: any[]) => {
+    // console.warn('Supabase storage deprecated. Use Azure Blob Storage.');
+    return 'https://placeholder-url.com/signed-url';
 };
 
 export default {
-    uploadFile,
-    generateSignedUrl,
 };

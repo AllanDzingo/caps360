@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { supabase, Tables } from '../config/supabase';
+import { query } from '../config/database';
 import logger from '../config/logger';
 import { AnalyticsEvent, AnalyticsEventType } from '../models/analytics.model';
 
@@ -26,24 +26,19 @@ export class AnalyticsService {
                 timestamp: new Date(),
             };
 
-            const dbEvent = {
-                id: event.id,
-                user_id: event.userId,
-                event_type: event.eventType,
-                metadata: event.metadata, // JSONB
-                user_tier: event.userTier,
-                user_role: event.userRole,
-                timestamp: event.timestamp.toISOString(),
-            };
 
-            const { error } = await supabase
-                .from(Tables.ANALYTICS)
-                .insert(dbEvent);
 
-            if (error) {
-                logger.warn('Supabase analytics track error:', error.message);
-                return;
-            }
+            const sql = `
+                INSERT INTO analytics (
+                    id, user_id, event_type, metadata, user_tier, user_role, timestamp
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `;
+            const values = [
+                event.id, event.userId, event.eventType, event.metadata,
+                event.userTier, event.userRole, event.timestamp.toISOString()
+            ];
+
+            await query(sql, values);
 
             logger.info(`Analytics event tracked: ${eventType} for user ${userId}`);
         } catch (error) {
@@ -57,16 +52,9 @@ export class AnalyticsService {
      */
     async getUserAnalytics(userId: string, limit: number = 100): Promise<AnalyticsEvent[]> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.ANALYTICS)
-                .select('*')
-                .eq('user_id', userId)
-                .order('timestamp', { ascending: false })
-                .limit(limit);
-
-            if (error) throw new Error(error.message);
-
-            return data.map(this.mapDbEventToModel);
+            const sql = 'SELECT * FROM analytics WHERE user_id = $1 ORDER BY timestamp DESC LIMIT $2';
+            const { rows } = await query(sql, [userId, limit]);
+            return rows.map(this.mapDbEventToModel);
         } catch (error) {
             logger.error('Get user analytics error:', error);
             throw error;
@@ -78,15 +66,9 @@ export class AnalyticsService {
      */
     async getAnalyticsSummary(startDate: Date, endDate: Date): Promise<any> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.ANALYTICS)
-                .select('*')
-                .gte('timestamp', startDate.toISOString())
-                .lte('timestamp', endDate.toISOString());
-
-            if (error) throw new Error(error.message);
-
-            const events = data.map(this.mapDbEventToModel);
+            const sql = 'SELECT * FROM analytics WHERE timestamp >= $1 AND timestamp <= $2';
+            const { rows } = await query(sql, [startDate.toISOString(), endDate.toISOString()]);
+            const events = rows.map(this.mapDbEventToModel);
 
             // Aggregate data
             const summary = {
@@ -131,14 +113,9 @@ export class AnalyticsService {
     async getRevenueAnalytics(startDate: Date, endDate: Date): Promise<any> {
         try {
             // Query Payments table
-            const { data, error } = await supabase
-                .from(Tables.PAYMENTS)
-                .select('*')
-                .gte('created_at', startDate.toISOString())
-                .lte('created_at', endDate.toISOString())
-                .eq('status', 'success');
-
-            if (error) throw new Error(error.message);
+            // Query Payments table
+            const sql = 'SELECT * FROM payments WHERE created_at >= $1 AND created_at <= $2 AND status = $3';
+            const { rows: data } = await query(sql, [startDate.toISOString(), endDate.toISOString(), 'success']);
 
             const revenue = {
                 totalRevenue: 0,

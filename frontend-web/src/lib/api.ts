@@ -1,69 +1,71 @@
 import axios from 'axios';
 
-// Prefer runtime-injected env (window.__env) if present, else fall back to compile-time Vite env
-const runtimeEnv = (window as any).__env;
-const API_URL = runtimeEnv?.VITE_API_URL || ((import.meta as any)['env']?.VITE_API_URL) || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-export const api = axios.create({
-    baseURL: `${API_URL}/api`,
+const api = axios.create({
+    baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Request interceptor to add auth token
-api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
+// TODO: Add auth interceptor when Auth is ready
+// api.interceptors.request.use((config) => {
+//     const token = useAuthStore.getState().token;
+//     if (token) {
+//         config.headers.Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+// });
+
+export interface Subject {
+    id: string;
+    title: string;
+    description: string;
+    grade: number;
+    subject: string;
+    thumbnailUrl?: string;
+    accessTier: string;
+}
+
+export interface ProgressMap {
+    [courseId: string]: number; // percent complete
+}
+
+export const contentApi = {
+    getDashboard: async (grade?: number) => {
+        const params = grade ? { grade } : {};
+        const response = await api.get<{ success: boolean; data: Subject[] }>('/content/dashboard', { params });
+        return response.data.data;
     },
-    (error) => Promise.reject(error)
-);
-
-// Response interceptor for error handling
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Unauthorized - clear token and redirect to login
-            localStorage.removeItem('auth_token');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
+    getSubject: async (id: string) => {
+        const response = await api.get<{ success: boolean; data: any }>('/content/subjects/' + id);
+        return response.data.data;
+    },
+    getTopic: async (id: string) => {
+        const response = await api.get<{ success: boolean; data: any }>('/content/topics/' + id);
+        return response.data.data;
     }
-);
-
-// Auth API
-export const authAPI = {
-    register: (data: any) => api.post('/auth/register', data),
-    login: (data: any) => api.post('/auth/login', data),
 };
 
-// Subscription API
+export const progressApi = {
+    getDashboardProgress: async (userId: string) => {
+        const response = await api.get<{ success: boolean; data: ProgressMap }>('/progress/dashboard', { params: { userId } });
+        return response.data.data;
+    },
+    startLesson: async (userId: string, lessonId: string) => {
+        await api.post(`/progress/lessons/${lessonId}/start`, { userId });
+    },
+    completeLesson: async (userId: string, lessonId: string, quizScore: number) => {
+        await api.post(`/progress/lessons/${lessonId}/complete`, { userId, quizScore });
+    }
+};
+
 export const subscriptionAPI = {
-    startTrial: () => api.post('/subscriptions/trial/start'),
-    startPaid: (data: any) => api.post('/subscriptions/paid/start', data),
-    upgrade: (tier: string) => api.post('/subscriptions/upgrade', { tier }),
-    cancel: () => api.post('/subscriptions/cancel'),
-};
-
-// AI API
-export const aiAPI = {
-    chat: (data: any) => api.post('/ai/chat', data),
-    generateQuiz: (data: any) => api.post('/ai/quiz/generate', data),
-    gradeAssignment: (data: any) => api.post('/ai/grade', data),
-    generateLessonPlan: (data: any) => api.post('/ai/lesson-plan', data),
-};
-
-// Content API
-export const contentAPI = {
-    getCourses: (params?: any) => api.get('/content/courses', { params }),
-    getCourse: (id: string) => api.get(`/content/courses/${id}`),
-    getLessons: (courseId: string) => api.get(`/content/courses/${courseId}/lessons`),
-    getLesson: (id: string) => api.get(`/content/lessons/${id}`),
+    // Placeholder - will implement properly later
+    getSubscriptions: async () => [],
+    subscribe: async (plan: string) => { console.log('Subscribe', plan); },
+    startTrial: async () => { console.log('Start Trial'); }
 };
 
 export default api;

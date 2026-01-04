@@ -5,10 +5,7 @@ import { Client } from 'pg';
 
 // Load environment variables
 dotenv.config();
-// Also try loading .env.production if standard .env is missing or insufficient, but priority to .env
-if (fs.existsSync(path.join(__dirname, '../.env.fly'))) {
-    dotenv.config({ path: path.join(__dirname, '../.env.fly') });
-}
+// Remove Fly.io .env loading. Use only .env or Azure App Service env vars.
 
 // Check for DATABASE_URL
 if (!process.env.DATABASE_URL) {

@@ -25,11 +25,23 @@ export interface Course {
     updatedAt: Date;
 }
 
-export interface Lesson {
+export interface Topic {
     id: string;
     courseId: string;
     title: string;
+    description?: string;
+    order: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface Lesson {
+    id: string;
+    courseId: string;
+    topicId: string; // Added hierarchy
+    title: string;
     description: string;
+    content?: string; // Markdown/HTML
     order: number;
 
     // Content
@@ -59,6 +71,16 @@ export interface Quiz {
     totalQuestions: number;
     passingScore: number; // percentage
 
+    // Adaptive Settings
+    adaptive: boolean;
+    difficultyStart: number;
+    difficultyMax: number;
+    timeLimitMinutes?: number;
+    adaptiveRules?: {
+        increaseAfter: number; // e.g. 2 consecutive correct
+        decreaseAfter: number; // e.g. 2 consecutive incorrect
+    };
+
     // Access control
     accessTier: SubscriptionTier;
 
@@ -77,6 +99,11 @@ export interface QuizQuestion {
     correctAnswer: number; // index of correct option
     explanation?: string;
     points: number;
+
+    // Adaptive Metadata
+    difficulty: number; // 1-6
+    cognitiveLevel: 'Remember' | 'Understand' | 'Apply' | 'Analyse' | 'Evaluate' | 'Create';
+    type: 'multiple_choice' | 'true_false' | 'short_answer';
 }
 
 export interface Assignment {

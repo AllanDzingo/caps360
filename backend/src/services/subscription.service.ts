@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { addDays } from 'date-fns';
-import { supabase, Tables } from '../config/supabase';
+import { query } from '../config/database';
 import config from '../config';
 import logger from '../config/logger';
 import {
@@ -40,16 +40,10 @@ export class SubscriptionService {
             const now = new Date();
             const trialEndDate = addDays(now, config.trial.durationDays);
 
-            const { error } = await supabase
-                .from(Tables.USERS)
-                .update({
-                    trial_premium: true,
-                    trial_end_date: trialEndDate.toISOString(),
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', userId);
-
-            if (error) throw new Error(`Supabase error: ${error.message}`);
+            await query(
+                'UPDATE users SET trial_premium = $1, trial_end_date = $2, updated_at = $3 WHERE id = $4',
+                [true, trialEndDate.toISOString(), now.toISOString(), userId]
+            );
 
             logger.info(`Free trial started for user: ${userId}, ends: ${trialEndDate}`);
         } catch (error) {
@@ -90,43 +84,58 @@ export class SubscriptionService {
                 updatedAt: now,
             };
 
-            const dbSubscription = {
-                id: subscription.id,
-                user_id: subscription.userId,
-                tier: subscription.tier,
-                status: subscription.status,
-                payment_provider: subscription.paymentProvider,
-                paystack_subscription_id: subscription.paystackSubscriptionId,
-                paystack_customer_code: subscription.paystackCustomerCode,
-                amount: subscription.amount,
-                currency: subscription.currency,
-                billing_cycle: subscription.billingCycle,
-                start_date: subscription.startDate.toISOString(),
-                next_billing_date: subscription.nextBillingDate?.toISOString(),
-                created_at: subscription.createdAt.toISOString(),
-                updated_at: subscription.updatedAt.toISOString(),
-            };
+
 
             // Save subscription
-            const { error: subError } = await supabase
-                .from(Tables.SUBSCRIPTIONS)
-                .insert(dbSubscription);
+            // Save subscription
+            const subSql = `
+                INSERT INTO subscriptions (
+                    id, user_id, tier, status, payment_provider,
+                    paystack_subscription_id, paystack_customer_code,
+                    amount, currency, billing_cycle,
+                    start_date, next_billing_date,
+                    created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            `;
 
-            if (subError) throw new Error(`Supabase error: ${subError.message}`);
+            const subValues = [
+                subscription.id,
+                subscription.userId,
+                subscription.tier,
+                subscription.status,
+                subscription.paymentProvider,
+                subscription.paystackSubscriptionId,
+                subscription.paystackCustomerCode,
+                subscription.amount,
+                subscription.currency,
+                subscription.billingCycle,
+                subscription.startDate.toISOString(),
+                subscription.nextBillingDate?.toISOString(),
+                subscription.createdAt.toISOString(),
+                subscription.updatedAt.toISOString()
+            ];
+
+            await query(subSql, subValues);
 
             // Update user with subscription and welcome premium
-            const { error: userError } = await supabase
-                .from(Tables.USERS)
-                .update({
-                    subscription_id: subscriptionId,
-                    current_tier: tier,
-                    welcome_premium: true,
-                    welcome_premium_end_date: welcomePremiumEndDate.toISOString(),
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', userId);
-
-            if (userError) throw new Error(`Supabase user update error: ${userError.message}`);
+            // Update user with subscription and welcome premium
+            await query(
+                `UPDATE users SET
+                    subscription_id = $1,
+                    current_tier = $2,
+                    welcome_premium = $3,
+                    welcome_premium_end_date = $4,
+                    updated_at = $5
+                WHERE id = $6`,
+                [
+                    subscriptionId,
+                    tier,
+                    true,
+                    welcomePremiumEndDate.toISOString(),
+                    now.toISOString(),
+                    userId
+                ]
+            );
 
             logger.info(`Paid subscription started for user: ${userId}, tier: ${tier}`);
 
@@ -142,31 +151,25 @@ export class SubscriptionService {
      */
     async handleTrialExpiry(userId: string): Promise<void> {
         try {
-            const { data: user, error } = await supabase
-                .from(Tables.USERS)
-                .select('trial_premium, trial_end_date')
-                .eq('id', userId)
-                .single();
+            const { rows } = await query('SELECT trial_premium, trial_end_date FROM users WHERE id = $1', [userId]);
+            const user = rows[0];
 
-            if (error || !user || !user.trial_premium) {
+            if (!user || !user.trial_premium) {
                 return;
             }
 
             const now = new Date();
 
-            // Check if trial has actually expired
+            // Check if trial has actually expired (Postgres driver returns Date objects for timestamps)
             if (user.trial_end_date && new Date(user.trial_end_date) > now) {
                 return; // Trial still active
             }
 
             // Set trial_premium to false
-            await supabase
-                .from(Tables.USERS)
-                .update({
-                    trial_premium: false,
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', userId);
+            await query(
+                'UPDATE users SET trial_premium = $1, updated_at = $2 WHERE id = $3',
+                [false, now.toISOString(), userId]
+            );
 
             logger.info(`Trial expired for user: ${userId}`);
         } catch (error) {
@@ -180,13 +183,10 @@ export class SubscriptionService {
      */
     async handleWelcomePremiumExpiry(userId: string): Promise<void> {
         try {
-            const { data: user, error } = await supabase
-                .from(Tables.USERS)
-                .select('welcome_premium, welcome_premium_end_date, current_tier')
-                .eq('id', userId)
-                .single();
+            const { rows } = await query('SELECT welcome_premium, welcome_premium_end_date, current_tier FROM users WHERE id = $1', [userId]);
+            const user = rows[0];
 
-            if (error || !user || !user.welcome_premium) {
+            if (!user || !user.welcome_premium) {
                 return;
             }
 
@@ -198,13 +198,10 @@ export class SubscriptionService {
             }
 
             // Set welcome_premium to false
-            await supabase
-                .from(Tables.USERS)
-                .update({
-                    welcome_premium: false,
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', userId);
+            await query(
+                'UPDATE users SET welcome_premium = $1, updated_at = $2 WHERE id = $3',
+                [false, now.toISOString(), userId]
+            );
 
             logger.info(`Welcome premium expired for user: ${userId}, reverted to tier: ${user.current_tier}`);
         } catch (error) {
@@ -219,40 +216,26 @@ export class SubscriptionService {
     async upgradeSubscription(userId: string, newTier: SubscriptionTier): Promise<void> {
         try {
             // Get user to find subscription ID
-            const { data: user, error } = await supabase
-                .from(Tables.USERS)
-                .select('subscription_id')
-                .eq('id', userId)
-                .single();
+            const { rows } = await query('SELECT subscription_id FROM users WHERE id = $1', [userId]);
+            const user = rows[0];
 
-            if (error || !user || !user.subscription_id) {
+            if (!user || !user.subscription_id) {
                 throw new Error('No active subscription found');
             }
 
             const now = new Date();
 
             // Update subscription
-            const { error: subError } = await supabase
-                .from(Tables.SUBSCRIPTIONS)
-                .update({
-                    tier: newTier,
-                    amount: this.getTierPrice(newTier),
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', user.subscription_id);
-
-            if (subError) throw subError;
+            await query(
+                'UPDATE subscriptions SET tier = $1, amount = $2, updated_at = $3 WHERE id = $4',
+                [newTier, this.getTierPrice(newTier), now.toISOString(), user.subscription_id]
+            );
 
             // Update user
-            const { error: userError } = await supabase
-                .from(Tables.USERS)
-                .update({
-                    current_tier: newTier,
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', userId);
-
-            if (userError) throw userError;
+            await query(
+                'UPDATE users SET current_tier = $1, updated_at = $2 WHERE id = $3',
+                [newTier, now.toISOString(), userId]
+            );
 
             logger.info(`Subscription upgraded for user: ${userId}, new tier: ${newTier}`);
         } catch (error) {
@@ -266,27 +249,20 @@ export class SubscriptionService {
      */
     async cancelSubscription(userId: string): Promise<void> {
         try {
-            const { data: user, error } = await supabase
-                .from(Tables.USERS)
-                .select('subscription_id')
-                .eq('id', userId)
-                .single();
+            const { rows } = await query('SELECT subscription_id FROM users WHERE id = $1', [userId]);
+            const user = rows[0];
 
-            if (error || !user || !user.subscription_id) {
+            if (!user || !user.subscription_id) {
                 throw new Error('No active subscription found');
             }
 
             const now = new Date();
 
             // Update subscription status
-            await supabase
-                .from(Tables.SUBSCRIPTIONS)
-                .update({
-                    status: SubscriptionStatus.CANCELLED,
-                    cancelled_at: now.toISOString(),
-                    updated_at: now.toISOString(),
-                })
-                .eq('id', user.subscription_id);
+            await query(
+                'UPDATE subscriptions SET status = $1, cancelled_at = $2, updated_at = $3 WHERE id = $4',
+                [SubscriptionStatus.CANCELLED, now.toISOString(), now.toISOString(), user.subscription_id]
+            );
 
             logger.info(`Subscription cancelled for user: ${userId}`);
         } catch (error) {

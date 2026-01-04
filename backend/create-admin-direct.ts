@@ -1,14 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
-import { supabaseAdmin, Tables } from './src/config/supabase';
+import { Tables } from './src/config/supabase';
+import { query } from './src/config/database';
 import { UserRole, SubscriptionTier } from './src/models/user.model';
 
 async function createAdminUser() {
     console.log('--- STARTING ADMIN CREATION ---');
-    if (!supabaseAdmin) {
-        console.error('[ERROR] Supabase Admin client not initialized.');
-        process.exit(1);
-    }
 
     try {
         const email = process.env.ADMIN_EMAIL || 'admin@caps360.co.za';
@@ -18,13 +15,11 @@ async function createAdminUser() {
 
         // Check if user exists
         console.log(`Checking if ${email} exists...`);
-        const { data: existingUser } = await supabaseAdmin
-            .from(Tables.USERS)
-            .select('id')
-            .eq('email', email)
-            .single();
-
-        if (existingUser) {
+        const { rows: existingUsers } = await query(
+            `SELECT id FROM users WHERE email = $1 LIMIT 1`,
+            [email]
+        );
+        if (existingUsers && existingUsers.length > 0) {
             console.log('Admin user already exists, skipping creation.');
             process.exit(0);
         }
@@ -33,29 +28,26 @@ async function createAdminUser() {
         const userId = uuidv4();
         const now = new Date().toISOString();
 
-        const dbUser = {
-            id: userId,
-            email: email,
-            password_hash: passwordHash,
-            first_name: firstName,
-            last_name: lastName,
-            role: UserRole.ADMIN,
-            current_tier: SubscriptionTier.PREMIUM,
-            trial_premium: false,
-            welcome_premium: false,
-            created_at: now,
-            updated_at: now
-        };
-
+        const insertSql = `
+            INSERT INTO users (
+                id, email, password_hash, first_name, last_name, role, current_tier, trial_premium, welcome_premium, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        `;
+        const insertParams = [
+            userId,
+            email,
+            passwordHash,
+            firstName,
+            lastName,
+            UserRole.ADMIN,
+            SubscriptionTier.PREMIUM,
+            false,
+            false,
+            now,
+            now
+        ];
         console.log('Inserting admin user...');
-        const { error } = await supabaseAdmin
-            .from(Tables.USERS)
-            .insert(dbUser);
-
-        if (error) {
-            throw new Error(error.message);
-        }
-
+        await query(insertSql, insertParams);
         console.log('[SUCCESS] Admin user created successfully!');
         process.exit(0);
     } catch (error) {

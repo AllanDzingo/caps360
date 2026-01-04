@@ -6,10 +6,18 @@ services:
       dockerfile: Dockerfile
     image: caps360-backend:local
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=8080
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=caps360
+      - DB_PASSWORD=devpassword
+      - DB_NAME=caps360
+      - JWT_SECRET=dev-secret-change-before-prod
     ports:
       - "8080:8080"
+    depends_on:
+      - db
     restart: unless-stopped
 
   frontend:
@@ -20,3 +28,17 @@ services:
     ports:
       - "3000:80"
     restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=caps360
+      - POSTGRES_PASSWORD=devpassword
+      - POSTGRES_DB=caps360
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

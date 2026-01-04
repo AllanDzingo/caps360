@@ -1,25 +1,14 @@
-import { supabaseAdmin } from './src/config/supabase';
+import { query } from './src/config/database';
 
 async function checkTables() {
-    console.log('--- CHECKING TABLES ---');
-    if (!supabaseAdmin) {
-        console.error('❌ Supabase Admin client not initialized.');
-        process.exit(1);
-    }
-
+    console.log('--- CHECKING TABLES (PostgreSQL) ---');
     try {
-        // There is no easy way to list tables via supabase-js without RPC or raw SQL
-        // But we can try to select from 'users' and see if it fails with 'relation does not exist'
-        const { error: userError } = await supabaseAdmin.from('users').select('count', { count: 'exact', head: true });
-        if (userError) {
-            console.log(`'users' table check result: ${userError.message} (Code: ${userError.code})`);
-        } else {
-            console.log("'users' table EXISTS.");
-        }
-
+        // Try to select from 'users' table
+        await query('SELECT COUNT(*) FROM users');
+        console.log("'users' table EXISTS.");
         process.exit(0);
-    } catch (error) {
-        console.error('❌ Error:', error);
+    } catch (err) {
+        console.error("'users' table check failed:", err.message || err);
         process.exit(1);
     }
 }

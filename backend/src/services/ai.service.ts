@@ -1,20 +1,26 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { AzureOpenAI } from 'openai';
 import NodeCache from 'node-cache';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase, Tables } from '../config/supabase';
+
+import { query } from '../config/database';
 import config from '../config';
 import logger from '../config/logger';
 import { AIConversation, AIMessage } from '../models/analytics.model';
 import { Quiz } from '../models/content.model';
 
 export class AIService {
-    private genAI: GoogleGenerativeAI;
-    private model: any;
+    private client: AzureOpenAI;
+    private deployment: string;
     private cache: NodeCache;
 
     constructor() {
-        this.genAI = new GoogleGenerativeAI(config.ai.geminiApiKey);
-        this.model = this.genAI.getGenerativeModel({ model: config.ai.model });
+        this.client = new AzureOpenAI({
+            apiKey: config.ai.azure.apiKey,
+            endpoint: config.ai.azure.endpoint,
+            apiVersion: config.ai.azure.apiVersion,
+            deployment: config.ai.azure.deployment
+        });
+        this.deployment = config.ai.azure.deployment;
         this.cache = new NodeCache({ stdTTL: 3600 }); // 1 hour cache
     }
 
@@ -31,15 +37,8 @@ export class AIService {
             let conversation: AIConversation;
 
             if (conversationId) {
-                const { data, error: dbError } = await supabase
-                    .from(Tables.AI_CONVERSATIONS)
-                    .select('*')
-                    .eq('id', conversationId)
-                    .single();
-
-                if (dbError) {
-                    logger.warn(`Failed to load conversation ${conversationId}`, dbError);
-                }
+                const { rows } = await query('SELECT * FROM ai_conversations WHERE id = $1', [conversationId]);
+                const data = rows[0];
 
                 if (data) {
                     conversation = this.mapDbConversationToModel(data);
@@ -51,25 +50,26 @@ export class AIService {
             }
 
             const history = conversation.messages.map(msg => ({
-                role: msg.role,
-                parts: [{ text: msg.content }],
+                role: msg.role as 'system' | 'user' | 'assistant',
+                content: msg.content,
             }));
 
             const systemPrompt = this.buildTutorSystemPrompt(lessonContext);
 
-            const chat = this.model.startChat({
-                history: [
-                    { role: 'user', parts: [{ text: systemPrompt }] },
-                    {
-                        role: 'model',
-                        parts: [{ text: 'I understand. I will act as a helpful CAPS-aligned tutor.' }],
-                    },
-                    ...history,
-                ],
+            const messages: any[] = [
+                { role: 'system', content: systemPrompt },
+                ...history,
+                { role: 'user', content: message }
+            ];
+
+            const result = await this.client.chat.completions.create({
+                model: this.deployment,
+                messages: messages,
+                max_tokens: 800,
+                temperature: 0.7,
             });
 
-            const result = await chat.sendMessage(message);
-            const response = result.response.text();
+            const response = result.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
 
             const userMessage: AIMessage = {
                 id: uuidv4(),
@@ -88,21 +88,24 @@ export class AIService {
             conversation.messages.push(userMessage, assistantMessage);
             conversation.updatedAt = new Date();
 
-            const dbConversation = {
-                id: conversation.id,
-                user_id: conversation.userId,
-                messages: conversation.messages,
-                created_at: conversation.createdAt.toISOString(),
-                updated_at: conversation.updatedAt.toISOString(),
-            };
+            const sql = `
+                INSERT INTO ai_conversations (
+                    id, user_id, messages, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (id) DO UPDATE SET
+                    messages = EXCLUDED.messages,
+                    updated_at = EXCLUDED.updated_at
+            `;
 
-            const { error: saveError } = await supabase
-                .from(Tables.AI_CONVERSATIONS)
-                .upsert(dbConversation);
+            const values = [
+                conversation.id,
+                conversation.userId,
+                JSON.stringify(conversation.messages),
+                conversation.createdAt.toISOString(),
+                conversation.updatedAt.toISOString()
+            ];
 
-            if (saveError) {
-                throw new Error(`Supabase error: ${saveError.message}`);
-            }
+            await query(sql, values);
 
             logger.info(`AI chat success: user=${userId}, conversation=${conversation.id}`);
 
@@ -153,22 +156,34 @@ Subject: ${subject}
 Lesson Content:
 ${lessonContent}
 
-Return valid JSON only.
+Return valid JSON strictly matching this structure:
+{
+  "title": "Quiz Title",
+  "questions": [
+    {
+      "question": "Question text",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": 0, // index of correct option
+      "explanation": "Why it is correct",
+      "points": 1
+    }
+  ]
+}
 `;
 
-            const result = await this.model.generateContent(prompt);
-            const responseText = result.response.text();
+            const result = await this.client.chat.completions.create({
+                model: this.deployment,
+                messages: [{ role: 'system', content: prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+            });
 
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('Failed to parse quiz JSON');
-            }
-
-            const quizData = JSON.parse(jsonMatch[0]);
+            const responseText = result.choices[0].message.content || '{}';
+            const quizData = JSON.parse(responseText);
 
             const quiz: Quiz = {
                 id: uuidv4(),
-                title: quizData.title,
+                title: quizData.title || `Grade ${grade} ${subject} Quiz`,
                 questions: quizData.questions.map((q: any) => ({
                     id: uuidv4(),
                     question: q.question,
@@ -177,33 +192,42 @@ Return valid JSON only.
                     explanation: q.explanation,
                     points: q.points,
                 })),
-                totalQuestions: quizData.questions.length,
+                totalQuestions: quizData.questions?.length || 0,
                 passingScore: 60,
                 accessTier: 'study_help' as any,
+
+                // Adaptive defaults
+                adaptive: false,
+                difficultyStart: 2,
+                difficultyMax: 5,
+
                 aiGenerated: true,
                 generatedBy: userId,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             };
 
-            const { error: insertError } = await supabase
-                .from(Tables.QUIZZES)
-                .insert({
-                    id: quiz.id,
-                    title: quiz.title,
-                    questions: quiz.questions,
-                    total_questions: quiz.totalQuestions,
-                    passing_score: quiz.passingScore,
-                    access_tier: quiz.accessTier,
-                    ai_generated: quiz.aiGenerated,
-                    generated_by: quiz.generatedBy,
-                    created_at: quiz.createdAt.toISOString(),
-                    updated_at: quiz.updatedAt.toISOString(),
-                });
+            const sql = `
+                INSERT INTO quizzes (
+                    id, title, questions, total_questions, passing_score,
+                    access_tier, ai_generated, generated_by, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            `;
 
-            if (insertError) {
-                throw new Error(`Supabase error: ${insertError.message}`);
-            }
+            const values = [
+                quiz.id,
+                quiz.title,
+                JSON.stringify(quiz.questions),
+                quiz.totalQuestions,
+                quiz.passingScore,
+                quiz.accessTier,
+                quiz.aiGenerated,
+                quiz.generatedBy,
+                quiz.createdAt.toISOString(),
+                quiz.updatedAt.toISOString()
+            ];
+
+            await query(sql, values);
 
             this.cache.set(cacheKey, quiz);
             logger.info(`Quiz generated: ${quiz.id}`);
@@ -235,18 +259,18 @@ ${rubric}
 
 Max Score: ${maxScore}
 
-Return JSON only.
+Return JSON only: { "score": number, "feedback": "string" }
 `;
 
-            const result = await this.model.generateContent(prompt);
-            const responseText = result.response.text();
+            const result = await this.client.chat.completions.create({
+                model: this.deployment,
+                messages: [{ role: 'system', content: prompt }],
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+            });
 
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('Failed to parse grading JSON');
-            }
-
-            return JSON.parse(jsonMatch[0]);
+            const responseText = result.choices[0].message.content || '{}';
+            return JSON.parse(responseText);
         } catch (error) {
             logger.error('Assignment grading error', error);
             throw error;
@@ -272,8 +296,13 @@ Topic: ${topic}
 Duration: ${duration} minutes
 `;
 
-            const result = await this.model.generateContent(prompt);
-            return result.response.text();
+            const result = await this.client.chat.completions.create({
+                model: this.deployment,
+                messages: [{ role: 'system', content: prompt }],
+                temperature: 0.7,
+            });
+
+            return result.choices[0].message.content || 'Failed to generate lesson plan.';
         } catch (error) {
             logger.error('Lesson plan generation error', error);
             throw error;

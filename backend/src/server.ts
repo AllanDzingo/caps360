@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import { supabase, Tables } from './config/supabase';
+import { query } from './config/database';
 import config from './config';
 import logger from './config/logger';
 import { requestLogger, errorLogger } from './middleware/logging.middleware';
@@ -14,6 +14,7 @@ import subscriptionRoutes from './routes/subscription.routes';
 import paymentRoutes from './routes/payment.routes';
 import aiRoutes from './routes/ai.routes';
 import contentRoutes from './routes/content.routes';
+import progressRoutes from './routes/progress.routes';
 
 const app = express();
 
@@ -24,7 +25,7 @@ app.use(helmet());
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
-    'https://caps360-frontend.fly.dev',
+    // 'https://caps360-frontend.fly.dev', // Removed Fly.io frontend
 ];
 
 const corsOptions = {
@@ -62,7 +63,7 @@ app.use('/api', (req, res, next) => {
     return apiLimiter(req, res, next);
 });
 
-// Health check endpoint (for Fly.io)
+// Health check endpoint (for Azure App Service)
 app.get('/health', (_req: Request, res: Response) => {
     res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
@@ -81,7 +82,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/progress', progressRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
@@ -103,15 +106,11 @@ const PORT = Number(process.env.PORT) || Number(config.port) || 8080;
 // Check database connection
 async function checkDatabaseConnection() {
     try {
-        const { error } = await supabase.from(Tables.USERS).select('count', { count: 'exact', head: true });
-        if (error) {
-            logger.error('❌ Supabase connection failed:', error.message);
-            // We might not want to exit process here in case of transient errors, but for now let's just log it.
-        } else {
-            logger.info('✅ Supabase connected successfully');
-        }
+        await query('SELECT 1');
+        logger.info('✅ Database connected successfully');
     } catch (error) {
-        logger.error('❌ Supabase connection error:', error);
+        logger.error('❌ Database connection error:', error);
+        // We might not want to exit process here in case of transient errors, but for now let's just log it.
     }
 }
 

@@ -5,8 +5,56 @@ import { PricingSection } from '@/components/PricingSection';
 import { Brain, BookOpen, Award, Users, Sparkles, TrendingUp } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
+    // Schema.org JSON-LD for business and service
+    const schema = {
+        '@context': 'https://schema.org',
+        '@type': 'EducationalOrganization',
+        'name': 'CAPS360',
+        'url': 'https://caps360.co.za',
+        'description': 'CAPS360 is a digital education platform providing curriculum-aligned content, AI-powered support, digital lessons, quizzes, summaries, and progress tracking. All services are delivered online. Payments are for digital services only.',
+        'email': 'support@caps360.co.za',
+        'areaServed': 'ZA',
+        'sameAs': [
+            'https://www.facebook.com/caps360',
+            'https://www.linkedin.com/company/caps360/'
+        ],
+        'serviceType': 'Digital educational services',
+        'paymentAccepted': 'Credit Card, EFT',
+        'hasOfferCatalog': {
+            '@type': 'OfferCatalog',
+            'name': 'CAPS360 Digital Services',
+            'itemListElement': [
+                {
+                    '@type': 'Offer',
+                    'itemOffered': {
+                        '@type': 'Service',
+                        'name': 'Premium Subscription',
+                        'description': 'Subscription access to premium digital learning features and content.'
+                    }
+                },
+                {
+                    '@type': 'Offer',
+                    'itemOffered': {
+                        '@type': 'Service',
+                        'name': 'Content Bundles',
+                        'description': 'Paid access to digital educational resources or content bundles.'
+                    }
+                },
+                {
+                    '@type': 'Offer',
+                    'itemOffered': {
+                        '@type': 'Service',
+                        'name': 'Academic Support',
+                        'description': 'Optional academic support services, quizzes, and AI-assisted tools.'
+                    }
+                }
+            ]
+        }
+    };
     return (
         <div className="min-h-screen">
+            {/* Schema.org JSON-LD for business and service clarity */}
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
             {/* Hero Section */}
             <section className="relative bg-gradient-to-br from-brand-navy via-brand-blue to-brand-teal text-white py-20 overflow-hidden">
                 <div className="absolute inset-0 opacity-10">

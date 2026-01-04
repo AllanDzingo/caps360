@@ -1,169 +1,143 @@
-import { v4 as uuidv4 } from 'uuid';
-import { supabase, Tables } from '../config/supabase';
-import { uploadFile, generateSignedUrl } from '../config/storage';
+import { query } from '../config/database';
+import { Course, Topic, Lesson } from '../models/content.model';
 import logger from '../config/logger';
-import { Course, Lesson } from '../models/content.model';
-import { SubscriptionTier } from '../models/user.model';
 
 export class ContentService {
+
     /**
-     * Get all courses
+     * Get all subjects (courses) for a specific grade
      */
-    async getCourses(grade?: number, subject?: string): Promise<Course[]> {
+    async getSubjectsByGrade(grade: number): Promise<Course[]> {
         try {
-            let query = supabase.from(Tables.COURSES).select('*');
+            const sql = `
+                SELECT * FROM courses 
+                WHERE grade = $1 
+                ORDER BY title ASC
+            `;
+            const { rows } = await query(sql, [grade]);
 
-            if (grade) {
-                query = query.eq('grade', grade);
-            }
-
-            if (subject) {
-                query = query.eq('subject', subject);
-            }
-
-            const { data, error } = await query;
-
-            if (error) throw new Error(`Supabase error: ${error.message}`);
-
-            return data as Course[];
+            return rows.map(this.mapDbCourseToModel);
         } catch (error) {
-            logger.error('Get courses error:', error);
+            logger.error(`Error fetching subjects for grade ${grade}`, error);
             throw error;
         }
     }
 
     /**
-     * Get course by ID
+     * Get a specific subject by ID
      */
-    async getCourseById(courseId: string): Promise<Course | null> {
+    async getSubjectById(id: string): Promise<Course | null> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.COURSES)
-                .select('*')
-                .eq('id', courseId)
-                .single();
-
-            if (error || !data) {
-                return null;
-            }
-            return data as Course;
+            const { rows } = await query('SELECT * FROM courses WHERE id = $1', [id]);
+            if (rows.length === 0) return null;
+            return this.mapDbCourseToModel(rows[0]);
         } catch (error) {
-            logger.error('Get course error:', error);
+            logger.error(`Error fetching subject ${id}`, error);
             throw error;
         }
     }
 
     /**
-     * Get lessons for a course
+     * Get topics for a specific subject (course)
      */
-    async getLessonsByCourse(courseId: string): Promise<Lesson[]> {
+    async getTopicsBySubject(courseId: string): Promise<Topic[]> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.LESSONS)
-                .select('*')
-                .eq('courseId', courseId)
-                .order('order', { ascending: true });
-
-            if (error) throw new Error(`Supabase error: ${error.message}`);
-
-            return data as Lesson[];
+            const sql = `
+                SELECT * FROM topics 
+                WHERE course_id = $1 
+                ORDER BY "order" ASC
+            `;
+            const { rows } = await query(sql, [courseId]);
+            return rows.map(this.mapDbTopicToModel);
         } catch (error) {
-            logger.error('Get lessons error:', error);
+            logger.error(`Error fetching topics for course ${courseId}`, error);
             throw error;
         }
     }
 
     /**
-     * Get lesson by ID with signed URLs for media
+     * Get lessons for a specific topic
      */
-    async getLessonById(lessonId: string): Promise<Lesson | null> {
+    async getLessonsByTopic(topicId: string): Promise<Lesson[]> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.LESSONS)
-                .select('*')
-                .eq('id', lessonId)
-                .single();
-
-            if (error || !data) {
-                return null;
-            }
-
-            const lesson = data as Lesson;
-
-            // Generate signed URLs
-            try {
-                if (lesson.videoUrl && !lesson.videoUrl.startsWith('http')) {
-                    // Assumes videoUrl is just the path, e.g. "videos/..."
-                    lesson.videoUrl = await generateSignedUrl('videos', lesson.videoUrl, 120);
-                }
-
-                if (lesson.pdfUrls && lesson.pdfUrls.length > 0) {
-                    const pdfsToSign = lesson.pdfUrls.map(async (url) => {
-                        if (url.startsWith('http')) return url;
-                        // Assumes url is path in 'pdfs' bucket
-                        return await generateSignedUrl('pdfs', url, 120);
-                    });
-                    lesson.pdfUrls = await Promise.all(pdfsToSign);
-                }
-            } catch (err) {
-                logger.warn('Failed to sign URLs', err);
-            }
-
-            return lesson;
+            const sql = `
+                SELECT * FROM lessons 
+                WHERE topic_id = $1 
+                ORDER BY "order" ASC
+            `;
+            const { rows } = await query(sql, [topicId]);
+            return rows.map(this.mapDbLessonToModel);
         } catch (error) {
-            logger.error('Get lesson error:', error);
+            logger.error(`Error fetching lessons for topic ${topicId}`, error);
             throw error;
         }
     }
 
     /**
-     * Upload video to Storage
+     * Get full structure: Subject -> Topics -> Lessons
      */
-    async uploadVideo(
-        file: Buffer,
-        fileName: string,
-        contentType: string
-    ): Promise<string> {
-        try {
-            const path = `videos/${uuidv4()}-${fileName}`;
-            await uploadFile('videos', path, file, contentType);
-            logger.info(`Video uploaded: ${path}`);
-            return path;
-        } catch (error) {
-            logger.error('Upload video error:', error);
-            throw error;
-        }
-    }
+    async getSubjectStructure(courseId: string) {
+        const subject = await this.getSubjectById(courseId);
+        if (!subject) throw new Error('Subject not found');
 
-    /**
-     * Upload PDF to Storage
-     */
-    async uploadPDF(
-        file: Buffer,
-        fileName: string
-    ): Promise<string> {
-        try {
-            const path = `pdfs/${uuidv4()}-${fileName}`;
-            await uploadFile('pdfs', path, file, 'application/pdf');
-            logger.info(`PDF uploaded: ${path}`);
-            return path;
-        } catch (error) {
-            logger.error('Upload PDF error:', error);
-            throw error;
-        }
-    }
+        const topics = await this.getTopicsBySubject(courseId);
 
-    /**
-     * Check if user has access to content based on tier
-     */
-    hasAccessToContent(userTier: SubscriptionTier, contentTier: SubscriptionTier): boolean {
-        const tierHierarchy = {
-            [SubscriptionTier.STUDY_HELP]: 1,
-            [SubscriptionTier.STANDARD]: 2,
-            [SubscriptionTier.PREMIUM]: 3,
+        const topicsWithLessons = await Promise.all(topics.map(async (topic) => {
+            const lessons = await this.getLessonsByTopic(topic.id);
+            return { ...topic, lessons };
+        }));
+
+        return {
+            ...subject,
+            topics: topicsWithLessons
         };
+    }
 
-        return tierHierarchy[userTier] >= tierHierarchy[contentTier];
+    // --- Mappers ---
+
+    private mapDbCourseToModel(row: any): Course {
+        return {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            grade: row.grade,
+            subject: row.subject,
+            thumbnailUrl: row.thumbnail_url,
+            accessTier: row.access_tier,
+            lessonIds: [], // Populated separately if needed
+            totalLessons: 0, // Calculated separately
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    }
+
+    private mapDbTopicToModel(row: any): Topic {
+        return {
+            id: row.id,
+            courseId: row.course_id,
+            title: row.title,
+            description: row.description,
+            order: row.order,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    }
+
+    private mapDbLessonToModel(row: any): Lesson {
+        return {
+            id: row.id,
+            courseId: row.course_id,
+            topicId: row.topic_id,
+            title: row.title,
+            description: row.description || '',
+            content: row.content,
+            order: row.order,
+            videoUrl: row.video_url,
+            pdfUrls: row.pdf_urls || [],
+            accessTier: row.access_tier,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
     }
 }
 

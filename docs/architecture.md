@@ -39,7 +39,6 @@ graph TB
     API --> STORAGE
     API --> AUTH
     API --> GEMINI
-    API --> PAYFAST
     API --> PAYSTACK
     API --> LOGGING
 ```

@@ -8,6 +8,7 @@ export interface User {
     firstName: string;
     lastName: string;
     role: string;
+    grade?: number;
     currentTier: string;
     effectiveTier: string;
     trialPremium: boolean;
@@ -55,6 +56,7 @@ supabase.auth.onAuthStateChange((_event, session) => {
             firstName: user.user_metadata?.first_name || '',
             lastName: user.user_metadata?.last_name || '',
             role: user.user_metadata?.role || 'student',
+            grade: user.user_metadata?.grade ? parseInt(user.user_metadata.grade) : 10,
             currentTier: user.user_metadata?.current_tier || 'study_help',
             effectiveTier: user.user_metadata?.effective_tier || 'study_help',
             trialPremium: user.user_metadata?.trial_premium || false,

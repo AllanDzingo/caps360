@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase, Tables } from '../config/supabase';
+import { query } from '../config/database';
 import config from '../config';
 import logger from '../config/logger';
 import {
@@ -48,33 +48,33 @@ export class AuthService {
                 updatedAt: now,
             };
 
-            // Save to Supabase
-            // Note: We need to map camelCase (model) to snake_case (DB) if needed.
-            // Assuming the Supabase table has snake_case columns matching the model structure or JSONB.
-            // For a relational DB, flat snake_case columns are better.
-            const dbUser = {
-                id: user.id,
-                email: user.email,
-                password_hash: user.passwordHash,
-                first_name: user.firstName,
-                last_name: user.lastName,
-                role: user.role,
-                grade: user.grade,
-                subjects: user.subjects,
-                current_tier: user.currentTier,
-                trial_premium: user.trialPremium,
-                welcome_premium: user.welcomePremium,
-                created_at: user.createdAt.toISOString(),
-                updated_at: user.updatedAt.toISOString(),
-            };
+            // Save to Database
+            const sql = `
+                INSERT INTO users (
+                    id, email, password_hash, first_name, last_name, role,
+                    grade, subjects, current_tier, trial_premium, welcome_premium,
+                    created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING *
+            `;
 
-            const { error } = await supabase
-                .from(Tables.USERS)
-                .insert(dbUser);
+            const values = [
+                user.id,
+                user.email,
+                user.passwordHash,
+                user.firstName,
+                user.lastName,
+                user.role,
+                user.grade,
+                user.subjects,
+                user.currentTier,
+                user.trialPremium,
+                user.welcomePremium,
+                user.createdAt,
+                user.updatedAt
+            ];
 
-            if (error) {
-                throw new Error(`Supabase error: ${error.message}`);
-            }
+            await query(sql, values);
 
             logger.info(`User registered: ${userId} (${data.email})`);
 
@@ -109,13 +109,11 @@ export class AuthService {
             }
 
             // Update last login
-            await supabase
-                .from(Tables.USERS)
-                .update({
-                    last_login_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', user.id);
+            // Update last login
+            await query(
+                'UPDATE users SET last_login_at = $1, updated_at = $2 WHERE id = $3',
+                [new Date(), new Date(), user.id]
+            );
 
             logger.info(`User logged in: ${user.id} (${user.email})`);
 
@@ -137,13 +135,14 @@ export class AuthService {
      */
     async getUserById(userId: string): Promise<User | null> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.USERS)
-                .select('*')
-                .eq('id', userId)
-                .single();
+            const { rows } = await query('SELECT * FROM users WHERE id = $1', [userId]);
+            const data = rows[0];
 
-            if (error || !data) {
+            if (!data) {
+                return null;
+            }
+
+            if (!data) {
                 return null;
             }
 
@@ -159,15 +158,11 @@ export class AuthService {
      */
     private async findUserByEmail(email: string): Promise<User | null> {
         try {
-            const { data, error } = await supabase
-                .from(Tables.USERS)
-                .select('*')
-                .eq('email', email.toLowerCase())
-                .single();
+            const { rows } = await query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+            const data = rows[0];
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-                throw error;
-            }
+            // Removed Supabase error check logic
+
 
             if (!data) {
                 return null;

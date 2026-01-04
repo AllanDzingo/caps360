@@ -1,0 +1,26 @@
+{
+  "name": "caps360-functions",
+  "version": "1.0.0",
+  "description": "CAPS360 Automated Communication System",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prestart": "npm run build",
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "@azure/communication-email": "^1.0.0",
+    "@azure/functions": "^4.0.0",
+    "dotenv": "^16.3.1",
+    "openai": "^4.104.0",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/pg": "^8.10.0",
+    "azure-functions-core-tools": "^4.x",
+    "typescript": "^4.0.0"
+  }
+}
