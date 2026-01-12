@@ -82,7 +82,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/ai', aiRoutes);
+
 app.use('/api/content', contentRoutes);
 app.use('/api/progress', progressRoutes);
 

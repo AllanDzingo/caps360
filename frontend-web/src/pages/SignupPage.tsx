@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { subscriptionAPI } from '@/lib/api';
-import { supabase } from '@/lib/supabaseClient';
+import api, { subscriptionAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -21,26 +21,31 @@ export const SignupPage: React.FC = () => {
 
     const registerMutation = useMutation({
         mutationFn: async (data: any) => {
-            const { error, data: authData } = await supabase.auth.signUp({
+            // Map form data to CreateUserDTO expected by backend
+            const payload = {
                 email: data.email,
                 password: data.password,
-                options: {
-                    data: {
-                        first_name: data.firstName,
-                        last_name: data.lastName,
-                        role: data.role,
-                        grade: data.grade,
-                    },
-                },
-            });
-            if (error) throw error;
-            return authData;
+                firstName: data.firstName,
+                lastName: data.lastName,
+                role: data.role,
+                grade: data.grade,
+                // Default subjects as empty array or handle in UI later
+                subjects: []
+            };
+
+            const response = await api.post('/auth/register', payload);
+            return response.data;
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            // Auto login after registration (if backend returns token)
+            if (data.token && data.user) {
+                useAuthStore.getState().setAuth(data.user, data.token);
+            }
             setStep('trial-choice');
         },
         onError: (error: any) => {
-            alert(error.message || 'Registration failed');
+            const message = error.response?.data?.error || error.message || 'Registration failed';
+            alert(message);
         },
     });
 

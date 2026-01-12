@@ -9,14 +9,16 @@ const api = axios.create({
     },
 });
 
-// TODO: Add auth interceptor when Auth is ready
-// api.interceptors.request.use((config) => {
-//     const token = useAuthStore.getState().token;
-//     if (token) {
-//         config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-// });
+// Auth interceptor
+api.interceptors.request.use((config) => {
+    // Get token from localStorage directly to avoid circular dependency with store
+    // or use store.getState().token if imported cautiously
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 export interface Subject {
     id: string;

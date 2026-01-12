@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
+import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
+    const setAuth = useAuthStore((state) => state.setAuth);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -14,18 +16,19 @@ export const LoginPage: React.FC = () => {
 
     const loginMutation = useMutation({
         mutationFn: async (data: any) => {
-            const { error, data: authData } = await supabase.auth.signInWithPassword({
+            const response = await api.post('/auth/login', {
                 email: data.email,
                 password: data.password,
             });
-            if (error) throw error;
-            return authData;
+            return response.data;
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
+            setAuth(data.user, data.token);
             navigate('/dashboard');
         },
         onError: (error: any) => {
-            alert(error.message || 'Login failed');
+            const message = error.response?.data?.error || error.message || 'Login failed';
+            alert(message);
         },
     });
 

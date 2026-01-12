@@ -1,0 +1,213 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'backend/**'
+      - 'frontend-web/**'
+      - '.github/workflows/deploy-azure.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  determine-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+    steps:
+      - name: Determine Environment
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run linter
+        working-directory: backend
+        run: npm run lint --if-present
+
+      - name: Run tests
+        working-directory: backend
+        run: npm test --if-present
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-dist
+          path: backend/dist
+          retention-days: 1
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontend-web/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: frontend-web
+        run: npm ci
+
+      - name: Run linter
+        working-directory: frontend-web
+        run: npm run lint --if-present
+
+      - name: Build frontend
+        working-directory: frontend-web
+        run: npm run build
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: frontend-web/dist
+          retention-days: 1
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: [build-backend, determine-environment]
+    environment:
+      name: ${{ needs.determine-environment.outputs.environment }}
+      url: https://caps360-backend-${{ needs.determine-environment.outputs.environment }}.azurewebsites.net
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-dist
+          path: backend/dist
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Prepare deployment package
+        working-directory: backend/dist
+        run: |
+          zip -r ../backend-deploy.zip .
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: caps360-backend-${{ needs.determine-environment.outputs.environment }}
+          package: backend/backend-deploy.zip
+          resource-group-name: caps360-${{ needs.determine-environment.outputs.environment }}
+
+      - name: Restart App Service
+        run: |
+          az webapp restart \
+            --resource-group caps360-${{ needs.determine-environment.outputs.environment }} \
+            --name caps360-backend-${{ needs.determine-environment.outputs.environment }}
+
+      - name: Health check
+        run: |
+          sleep 30
+          for i in {1..10}; do
+            if curl -f https://caps360-backend-${{ needs.determine-environment.outputs.environment }}.azurewebsites.net/health; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          exit 1
+
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: [build-frontend, determine-environment]
+    environment:
+      name: ${{ needs.determine-environment.outputs.environment }}
+      url: https://caps360-web-${{ needs.determine-environment.outputs.environment }}.azurestaticapps.net
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-dist
+          path: frontend-web/dist
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "frontend-web"
+          output_location: "dist"
+          skip_app_build: true
+
+  notify-deployment:
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend, determine-environment]
+    if: always()
+    steps:
+      - name: Check deployment status
+        run: |
+          if [[ "${{ needs.deploy-backend.result }}" == "success" && "${{ needs.deploy-frontend.result }}" == "success" ]]; then
+            echo "✅ Deployment successful"
+            exit 0
+          else
+            echo "❌ Deployment failed"
+            exit 1
+          fi
+
+      - name: Send notification (optional)
+        if: always()
+        run: |
+          echo "Deployment to ${{ needs.determine-environment.outputs.environment }} completed"
+          echo "Backend: https://caps360-backend-${{ needs.determine-environment.outputs.environment }}.azurewebsites.net"
+          echo "Frontend: https://caps360-web-${{ needs.determine-environment.outputs.environment }}.azurestaticapps.net"
