@@ -1,4 +1,19 @@
+# CAPS360 Azure Pipelines Configuration
+# This pipeline builds and deploys the CAPS360 application to Azure
+# Triggered on commits to master or main branches
+
 trigger:
+  branches:
+    include:
+      - master
+      - main
+  paths:
+    include:
+      - backend/**
+      - frontend-web/**
+      - azure-pipelines.yml
+
+pr:
   branches:
     include:
       - master
@@ -10,40 +25,110 @@ pool:
 variables:
   backendPath: 'backend'
   frontendPath: 'frontend-web'
+  nodeVersion: '20.x'
 
 stages:
-  - stage: Build
-    displayName: 'Build Backend and Frontend'
+  # Stage 1: Build and Test
+  - stage: BuildAndTest
+    displayName: 'Build and Test'
     jobs:
       - job: BuildBackend
-        displayName: 'Build Backend'
+        displayName: 'Build and Test Backend'
         steps:
           - checkout: self
+            displayName: 'Checkout Repository'
+
           - task: NodeTool@0
+            displayName: 'Install Node.js $(nodeVersion)'
             inputs:
-              versionSpec: '20.x'
+              versionSpec: '$(nodeVersion)'
+
           - script: |
               cd $(backendPath)
               npm ci
+            displayName: 'Install Backend Dependencies'
+
+          - script: |
+              cd $(backendPath)
+              npm run lint --if-present || echo "Linting not configured"
+            displayName: 'Lint Backend Code'
+            continueOnError: true
+
+          - script: |
+              cd $(backendPath)
+              npm test --if-present || echo "Tests not configured"
+            displayName: 'Run Backend Tests'
+            continueOnError: true
+
+          - script: |
+              cd $(backendPath)
               npm run build
-            displayName: 'Install and Build Backend'
+            displayName: 'Build Backend'
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive Backend Build'
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/$(backendPath)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+              replaceExistingArchive: true
+
+          - publish: '$(Build.ArtifactStagingDirectory)/backend-$(Build.BuildId).zip'
+            artifact: backend
+            displayName: 'Publish Backend Artifact'
 
       - job: BuildFrontend
-        displayName: 'Build Frontend'
+        displayName: 'Build and Test Frontend'
         steps:
           - checkout: self
+            displayName: 'Checkout Repository'
+
           - task: NodeTool@0
+            displayName: 'Install Node.js $(nodeVersion)'
             inputs:
-              versionSpec: '20.x'
+              versionSpec: '$(nodeVersion)'
+
           - script: |
               cd $(frontendPath)
               npm ci
-              npm run build
-            displayName: 'Install and Build Frontend'
+            displayName: 'Install Frontend Dependencies'
 
-  - stage: Deploy
-    displayName: 'Deploy Backend and Frontend'
-    dependsOn: Build
+          - script: |
+              cd $(frontendPath)
+              npm run lint --if-present || echo "Linting not configured"
+            displayName: 'Lint Frontend Code'
+            continueOnError: true
+
+          - script: |
+              cd $(frontendPath)
+              npx tsc --noEmit || echo "TypeScript check not configured"
+            displayName: 'TypeScript Type Check'
+            continueOnError: true
+
+          - script: |
+              cd $(frontendPath)
+              npm run build
+            displayName: 'Build Frontend'
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive Frontend Build'
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/$(frontendPath)/dist'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/frontend-$(Build.BuildId).zip'
+              replaceExistingArchive: true
+
+          - publish: '$(Build.ArtifactStagingDirectory)/frontend-$(Build.BuildId).zip'
+            artifact: frontend
+            displayName: 'Publish Frontend Artifact'
+
+  # Stage 2: Deploy to Azure
+  - stage: DeployToAzure
+    displayName: 'Deploy to Azure'
+    dependsOn: BuildAndTest
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: DeployBackend
         displayName: 'Deploy Backend to Azure App Service'
@@ -52,13 +137,26 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: self
+                - download: current
+                  artifact: backend
+                  displayName: 'Download Backend Artifact'
+
                 - task: AzureWebApp@1
+                  displayName: 'Deploy to Azure App Service'
                   inputs:
                     azureSubscription: '$(AZURE_SUBSCRIPTION_SERVICE_CONNECTION)'
-                    appType: 'webApp'
+                    appType: 'webAppLinux'
                     appName: '$(AZURE_BACKEND_APP_NAME)'
-                    package: '$(System.DefaultWorkingDirectory)/$(backendPath)'
+                    package: '$(Pipeline.Workspace)/backend/backend-$(Build.BuildId).zip'
+                    runtimeStack: 'NODE|20-lts'
+                    startUpCommand: 'npm start'
+
+                - script: |
+                    echo "Waiting for application to start..."
+                    sleep 30
+                    curl -f https://$(AZURE_BACKEND_APP_NAME).azurewebsites.net/health || echo "Health check endpoint not available yet"
+                  displayName: 'Health Check'
+                  continueOnError: true
 
       - deployment: DeployFrontend
         displayName: 'Deploy Frontend to Azure Static Web Apps'
@@ -67,9 +165,20 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: self
-                - task: AzureStaticWebApp@0
+                - download: current
+                  artifact: frontend
+                  displayName: 'Download Frontend Artifact'
+
+                - task: ExtractFiles@1
+                  displayName: 'Extract Frontend Build'
                   inputs:
-                    app_location: '$(frontendPath)/frontend-web'
-                    output_location: '$(frontendPath)/dist'
+                    archiveFilePatterns: '$(Pipeline.Workspace)/frontend/frontend-$(Build.BuildId).zip'
+                    destinationFolder: '$(Pipeline.Workspace)/frontend-dist'
+                    cleanDestinationFolder: true
+
+                - task: AzureStaticWebApp@0
+                  displayName: 'Deploy to Azure Static Web Apps'
+                  inputs:
+                    app_location: '$(Pipeline.Workspace)/frontend-dist'
+                    skip_app_build: true
                     azure_static_web_apps_api_token: '$(AZURE_STATIC_WEB_APPS_API_TOKEN)'

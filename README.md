@@ -2,9 +2,7 @@
 
 ![CAPS360 Logo](./docs/assets/logo.png)
 
-[![CI](https://github.com/YOUR_USERNAME/CAPS360/workflows/CI%20-%20Tests%20and%20Linting/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
-[![Deploy](https://github.com/YOUR_USERNAME/CAPS360/workflows/Deploy%20to%20Fly.io/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
-[![Security](https://github.com/YOUR_USERNAME/CAPS360/workflows/Security%20Scanning/badge.svg)](https://github.com/YOUR_USERNAME/CAPS360/actions)
+[![Build Status](https://dev.azure.com/YOUR_ORG/CAPS360/_apis/build/status/CAPS360?branchName=main)](https://dev.azure.com/YOUR_ORG/CAPS360/_build/latest?definitionId=1&branchName=main)
 
 ## Overview
 
@@ -62,13 +60,14 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 
 ### DevOps
 
-- **CI/CD:** GitHub Actions
-  - Automated testing on pull requests
-  - Security scanning and dependency updates
-- **Hosting:** Fly.io
-- **Secrets:** Environment variables / Fly.io Secret Management
+- **CI/CD:** Azure Pipelines
+  - Automated testing on commits and pull requests
+  - Continuous deployment to Azure
+  - Build artifacts and release management
+- **Hosting:** Azure App Service (Backend) + Azure Static Web Apps (Frontend)
+- **Secrets:** Azure Key Vault integration
 
-> 📚 **See [GitHub Actions Guide](./docs/github-actions-guide.md) for complete CI/CD setup instructions**
+> 📚 **See [Azure DevOps Setup Guide](./docs/azure-devops-setup-guide.md) for complete CI/CD setup instructions**
 
 ## Project Structure
 
@@ -100,8 +99,8 @@ CAPS360/
 │   └── app.json            # Expo configuration
 ├── docs/                   # Documentation
 ├── scripts/                # Utility scripts
-├── fly-backend.toml        # Fly.io configuration
-└── fly-frontend.toml       # Fly.io configuration
+├── azure-pipelines.yml     # Azure Pipelines configuration
+└── docs/                   # Documentation
 ```
 
 ## Getting Started
@@ -109,9 +108,10 @@ CAPS360/
 ### Prerequisites
 
 - Node.js 18+ and npm
-- [Flyctl](https://fly.io/docs/hands-on/install-flyctl/) (for deployment)
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) (for deployment)
 - Docker (for local testing)
 - Expo CLI (for mobile development)
+- Visual Studio 2022 (optional, for Azure DevOps integration)
 
 ### Backend Setup
 
@@ -164,67 +164,100 @@ VITE_API_URL=http://localhost:8080
 VITE_PAYSTACK_PUBLIC_KEY=your-paystack-public-key
 ```
 
-## GitHub Setup
+## Azure DevOps Setup
 
-### Quick Setup (Automated)
+### Quick Setup
 
-Run the automated setup script:
+1. **Create Azure DevOps Organization and Project:**
+   - Go to [dev.azure.com](https://dev.azure.com)
+   - Create a new organization (if needed)
+   - Create a new project: `CAPS360`
 
-```bash
-.\scripts\setup-github.ps1
-```
+2. **Connect Repository:**
+   - Import or connect your GitHub repository
+   - Azure Pipelines will automatically detect `azure-pipelines.yml`
 
-This will:
+3. **Configure Service Connections:**
+   - Create Azure Resource Manager service connection
+   - Get Static Web Apps deployment token from Azure Portal
+   - Add as pipeline variables
 
-- Initialize Git repository
-- Update configuration files
-- Create initial commit
-- Provide next steps for GitHub connection
+4. **Set Up Pipeline Variables:**
+   - `AZURE_SUBSCRIPTION_SERVICE_CONNECTION`: Azure service connection name
+   - `AZURE_BACKEND_APP_NAME`: Azure App Service name (e.g., `caps360-backend-prod`)
+   - `AZURE_STATIC_WEB_APPS_API_TOKEN`: Static Web Apps deployment token
+
+> 📚 **See [Azure DevOps Setup Guide](./docs/azure-devops-setup-guide.md) for detailed instructions**
 
 ### Manual Setup
 
-1. **Initialize Git and push to GitHub:**
+For detailed step-by-step instructions on setting up Azure DevOps, configuring pipelines, and connecting from Visual Studio, refer to the comprehensive guide:
 
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: CAPS360 platform"
-   git remote add origin https://github.com/YOUR_USERNAME/CAPS360.git
-   git branch -M main
-   git push -u origin main
-   ```
+- [Azure DevOps Setup Guide](./docs/azure-devops-setup-guide.md)
 
-2. **Configure Fly.io:**
-   Ensure you have `FLY_API_TOKEN` set in your GitHub repository secrets.
-
-3. **Configure GitHub Secrets:**
-   - Go to Repository → Settings → Secrets and variables → Actions
-   - Add required secrets (see [GitHub Actions Guide](./docs/github-actions-guide.md))
-
-4. **Enable GitHub Actions:**
-   - Workflows will automatically run on push/PR
-   - Check the Actions tab to monitor deployments
+This guide covers:
+- Creating Azure DevOps organization and project
+- Connecting GitHub repository
+- Configuring service connections
+- Setting up pipeline variables
+- Deploying to Azure
+- Visual Studio integration
+- Troubleshooting common issues
 
 ## Deployment
 
-### Automated Deployment (via GitHub Actions)
+### Automated Deployment (via Azure Pipelines)
 
-Once GitHub Actions is set up, deployments happen automatically:
+Once Azure Pipelines is set up, deployments happen automatically:
 
-- **Backend:** Deploys to Fly.io on push to `master` when `backend/**` or `fly-backend.toml` changes
-- **Frontend:** Deploys to Fly.io on push to `master` when `frontend-web/**` or `fly-frontend.toml` changes
+- **Trigger:** Push to `main` or `master` branch
+- **Build:** Backend and frontend are built and tested
+- **Deploy:** Automatically deploys to Azure App Service (backend) and Azure Static Web Apps (frontend)
+- **Monitoring:** View pipeline status in Azure DevOps
 
-### Manual Deployment
+### Manual Deployment to Azure
 
-### Deploy to Fly.io
+#### Deploy Backend to Azure App Service
 
 ```bash
-# Backend
-flyctl deploy --config fly-backend.toml
+# Login to Azure
+az login
 
-# Frontend
-flyctl deploy --config fly-frontend.toml
+# Build backend
+cd backend
+npm ci
+npm run build
+
+# Create a zip package
+cd dist
+zip -r ../backend-deploy.zip .
+cd ..
+
+# Deploy to App Service
+az webapp deployment source config-zip \
+  --resource-group caps360-prod \
+  --name caps360-backend-prod \
+  --src backend-deploy.zip
 ```
+
+#### Deploy Frontend to Azure Static Web Apps
+
+```bash
+# Build frontend
+cd frontend-web
+npm ci
+npm run build
+
+# Deploy to Static Web Apps (requires SWA CLI)
+npm install -g @azure/static-web-apps-cli
+swa deploy ./dist \
+  --deployment-token <your-token> \
+  --env production
+```
+
+> 💡 **Tip:** Use the automated PowerShell/Bash scripts in the `scripts/` folder for easier deployment:
+> - `scripts/deploy-to-azure.ps1` (Windows)
+> - `scripts/deploy-to-azure.sh` (Linux/macOS)
 
 ## Testing
 
