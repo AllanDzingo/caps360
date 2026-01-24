@@ -7,6 +7,8 @@ import logger from '../config/logger';
 export interface AuthRequest extends Request {
     userId?: string;
     user?: any;
+    file?: Express.Multer.File; // For single file uploads with multer
+    files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] }; // For multiple files
 }
 
 /**
