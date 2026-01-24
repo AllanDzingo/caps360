@@ -43,8 +43,8 @@ jobs:
         with:
           inlineScript: |
             az webapp config appsettings set \
-              --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --name caps360-backend-prod \
+              --resource-group caps360-backend-prod_group \
               --settings \
                 DB_HOST='${{ secrets.DB_HOST }}' \
                 DB_PORT='${{ secrets.DB_PORT }}' \
@@ -58,5 +58,5 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          app-name: caps360-backend-prod
           package: ./backend

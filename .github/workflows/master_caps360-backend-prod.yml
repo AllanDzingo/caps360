@@ -61,7 +61,7 @@ jobs:
           inlineScript: |
             az webapp config appsettings set \
               --name caps360-backend-prod \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --resource-group caps360-backend-prod_group \
               --settings \
                 DB_HOST='${{ secrets.DB_HOST }}' \
                 DB_PORT='${{ secrets.DB_PORT }}' \
