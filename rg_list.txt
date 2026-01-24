@@ -1,0 +1,24 @@
+[
+  {
+    "id": "/subscriptions/fbab572c-adde-4321-875b-39510e6bfc8c/resourceGroups/caps360",
+    "location": "southafricanorth",
+    "managedBy": null,
+    "name": "caps360",
+    "properties": {
+      "provisioningState": "Succeeded"
+    },
+    "tags": {},
+    "type": "Microsoft.Resources/resourceGroups"
+  },
+  {
+    "id": "/subscriptions/fbab572c-adde-4321-875b-39510e6bfc8c/resourceGroups/DefaultResourceGroup-JNB",
+    "location": "southafricanorth",
+    "managedBy": null,
+    "name": "DefaultResourceGroup-JNB",
+    "properties": {
+      "provisioningState": "Succeeded"
+    },
+    "tags": null,
+    "type": "Microsoft.Resources/resourceGroups"
+  }
+]

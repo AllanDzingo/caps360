@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle, ChevronRight, AlertCircle } from 'lucide-react';
-import { contentApi, progressApi } from '../lib/api';
+import { progressApi } from '../lib/api';
 
 // Types (Move to a shared types file later)
 interface Question {

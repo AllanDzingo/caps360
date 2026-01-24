@@ -1,0 +1,16 @@
+{
+  "environmentName": "AzureCloud",
+  "homeTenantId": "73dc459e-7099-44f7-96c5-975d50a153a0",
+  "id": "fbab572c-adde-4321-875b-39510e6bfc8c",
+  "isDefault": true,
+  "managedByTenants": [],
+  "name": "Azure subscription 1",
+  "state": "Enabled",
+  "tenantDefaultDomain": "caps360appgmail.onmicrosoft.com",
+  "tenantDisplayName": "Default Directory",
+  "tenantId": "73dc459e-7099-44f7-96c5-975d50a153a0",
+  "user": {
+    "name": "caps360app@gmail.com",
+    "type": "user"
+  }
+}
