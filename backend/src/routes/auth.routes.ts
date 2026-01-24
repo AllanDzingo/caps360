@@ -42,6 +42,25 @@ router.post(
                 req.body.role
             );
 
+            // Trigger welcome email (Azure Function)
+            try {
+                const functionUrl = process.env.AZURE_FUNCTION_WELCOME_EMAIL_URL;
+                if (functionUrl) {
+                    await fetch(functionUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: result.user.id,
+                            email: result.user.email,
+                            firstName: result.user.firstName,
+                        }),
+                    });
+                }
+            } catch (emailError) {
+                logger.error('Failed to trigger welcome email:', emailError);
+                // Don't fail registration if email fails
+            }
+
             res.status(201).json(result);
             return;
         } catch (error: any) {

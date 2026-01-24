@@ -69,6 +69,21 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_55E554FD9B4C4BAF93763A990612EC75 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FA3CD9AA82A541159B5C1BC659916DC1 }}
 
+      - name: Configure Function App Settings
+        uses: azure/cli@v1
+        with:
+          inlineScript: |
+            az functionapp config appsettings set \
+              --name caps360-funcs-prod \
+              --resource-group caps360-funcs-prod_group \
+              --settings \
+                DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+                AZURE_OPENAI_ENDPOINT='${{ secrets.AZURE_OPENAI_ENDPOINT }}' \
+                AZURE_OPENAI_API_KEY='${{ secrets.AZURE_OPENAI_API_KEY }}' \
+                AZURE_OPENAI_DEPLOYMENT='gpt-4o-mini' \
+                AZURE_OPENAI_API_VERSION='2024-12-01-preview' \
+                COMMUNICATION_SERVICES_CONNECTION_STRING='${{ secrets.COMMUNICATION_SERVICES_CONNECTION_STRING }}'
+
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
         id: fa
