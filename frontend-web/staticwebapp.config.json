@@ -1,15 +1,4 @@
 {
-  "routes": [
-    {
-      "route": "/api/public/*",
-      "allowedRoles": ["anonymous"]
-    },
-    {
-      "route": "/api/*",
-      "allowedRoles": ["authenticated"]
-    }
-  ],
-
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
