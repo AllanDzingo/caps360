@@ -2,9 +2,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const nodeEnv = process.env.NODE_ENV || 'development';
+const databaseUrl = process.env.DATABASE_URL || process.env.AZURE_POSTGRESQL_CONNECTIONSTRING;
+
 export const config = {
     port: parseInt(process.env.PORT || '8080', 10),
-    nodeEnv: process.env.NODE_ENV || 'development',
+    nodeEnv,
 
     jwt: {
         secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
@@ -24,12 +27,14 @@ export const config = {
 
 
     database: {
+        connectionString: databaseUrl,
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432', 10),
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'postgres',
         name: process.env.DB_NAME || 'caps360',
-        ssl: process.env.DB_SSL === 'true',
+        // Default to SSL in production (Azure requires it) but allow override via DB_SSL
+        ssl: process.env.DB_SSL ? process.env.DB_SSL === 'true' : nodeEnv === 'production',
     },
 
     payfast: {

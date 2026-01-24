@@ -55,6 +55,23 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DABA200BBCD34B92B5FD0FF2642CA51F }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EC63A561A0594BA7BEB74467697C62C7 }}
 
+      - name: Configure App Settings (Database)
+        uses: azure/cli@v1
+        with:
+          inlineScript: |
+            az webapp config appsettings set \
+              --name caps360-backend-prod \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --settings \
+                DB_HOST='${{ secrets.DB_HOST }}' \
+                DB_PORT='${{ secrets.DB_PORT }}' \
+                DB_NAME='${{ secrets.DB_NAME }}' \
+                DB_USER='${{ secrets.DB_USER }}' \
+                DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+                DB_SSL='${{ secrets.DB_SSL }}' \
+                DATABASE_URL='${{ secrets.DATABASE_URL }}' \
+                AZURE_POSTGRESQL_CONNECTIONSTRING='${{ secrets.AZURE_POSTGRESQL_CONNECTIONSTRING }}'
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3

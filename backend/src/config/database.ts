@@ -2,13 +2,20 @@ import { Pool } from 'pg';
 import config from './index';
 import logger from './logger';
 
+const sslConfig = config.database.ssl ? { rejectUnauthorized: false } : undefined;
+
 const pool = new Pool({
-    host: config.database.host,
-    port: config.database.port,
-    user: config.database.user,
-    password: config.database.password,
-    database: config.database.name,
-    ssl: config.database.ssl ? { rejectUnauthorized: false } : undefined,
+    // Prefer a single connection string when provided (Azure App Service / Flexible Server)
+    ...(config.database.connectionString
+        ? { connectionString: config.database.connectionString }
+        : {
+            host: config.database.host,
+            port: config.database.port,
+            user: config.database.user,
+            password: config.database.password,
+            database: config.database.name,
+        }),
+    ssl: sslConfig,
     // Connection pool settings
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
