@@ -52,7 +52,7 @@ export const SignupPage: React.FC = () => {
     const trialMutation = useMutation({
         mutationFn: subscriptionAPI.startTrial,
         onSuccess: () => {
-            navigate('/dashboard');
+            navigate('/select-subjects');
         },
     });
 
@@ -65,7 +65,7 @@ export const SignupPage: React.FC = () => {
         if (startTrial) {
             trialMutation.mutate();
         } else {
-            navigate('/pricing');
+            navigate('/payment');
         }
     };
 

@@ -101,7 +101,7 @@ export const PricingSection: React.FC = () => {
                                     ))}
                                 </ul>
 
-                                <Link to="/signup" className="block">
+                                <Link to="/payment" className="block">
                                     <Button
                                         variant={tier.highlighted ? 'premium' : 'primary'}
                                         className="w-full"

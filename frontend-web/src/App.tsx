@@ -27,6 +27,9 @@ const queryClient = new QueryClient({
 import { DashboardPage } from './pages/DashboardPage';
 import { SubjectView } from './pages/SubjectView';
 import { QuizPlayer } from './components/QuizPlayer';
+import { PaymentPage } from './pages/PaymentPage';
+import { SubjectSelectionPage } from './pages/SubjectSelectionPage';
+import { AIChatPage } from './pages/AIChatPage';
 // ... previous imports
 
 // Protected Route Component
@@ -45,6 +48,30 @@ function App() {
                         <Route path="/" element={<LandingPage />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/signup" element={<SignupPage />} />
+                        <Route
+                            path="/payment"
+                            element={
+                                <ProtectedRoute>
+                                    <PaymentPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/select-subjects"
+                            element={
+                                <ProtectedRoute>
+                                    <SubjectSelectionPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/ai-chat"
+                            element={
+                                <ProtectedRoute>
+                                    <AIChatPage />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route
                             path="/dashboard"
                             element={
