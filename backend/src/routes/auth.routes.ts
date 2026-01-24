@@ -44,7 +44,7 @@ router.post(
 
             // Trigger welcome email (Azure Function)
             try {
-                const functionUrl = process.env.AZURE_FUNCTION_WELCOME_EMAIL_URL;
+                const functionUrl = config.azureFunctions.welcomeEmailUrl;
                 if (functionUrl) {
                     await fetch(functionUrl, {
                         method: 'POST',
