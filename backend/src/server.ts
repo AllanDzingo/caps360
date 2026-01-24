@@ -22,10 +22,11 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration for frontend
+// Production Azure Static Web Apps URL must be explicitly added for browser CORS to work
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
-    // 'https://caps360-frontend.fly.dev', // Removed Fly.io frontend
+    'https://mango-sky-09623131e.1.azurestaticapps.net', // Production Azure Static Web Apps frontend
 ];
 
 const corsOptions = {
@@ -42,6 +43,7 @@ const corsOptions = {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400, // Cache CORS preflight for 24 hours to reduce repeated checks
 };
 app.use(cors(corsOptions));
 
