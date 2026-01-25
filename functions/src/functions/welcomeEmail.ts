@@ -35,9 +35,13 @@ export async function welcomeEmail(request: HttpRequest, context: InvocationCont
         if (emailClient) {
             try {
                 context.log(`Sending Welcome Email to: ${email} (${firstName})`);
+                const senderAddress = process.env.EMAIL_SENDER_ADDRESS;
+                if (!senderAddress) {
+                    throw new Error('EMAIL_SENDER_ADDRESS not configured on Function App');
+                }
                 
                 const emailMessage = {
-                    senderAddress: "DoNotReply@9af99e8f-e3fe-4ed3-8e83-dbcfe0f14bce.azurecomm.net",
+                    senderAddress,
                     content: {
                         subject: "Welcome to CAPS360! 🚀",
                         html: `
