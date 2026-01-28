@@ -26,7 +26,7 @@
         "react-paystack": "^5.0.0",
         "react-router-dom": "^6.21.1",
         "tailwind-merge": "^2.2.0",
-        "zustand": "^4.4.7"
+        "zustand": "^5.0.9"
     },
     "devDependencies": {
         "@types/react": "^18.2.43",
