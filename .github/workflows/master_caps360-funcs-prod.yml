@@ -1,5 +1,11 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
 # More GitHub Actions for Azure: https://github.com/Azure/actions
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check resource group secret
+        run: echo "Resource group used: ${{ secrets.AZURE_RESOURCE_GROUP }}"
 
 name: Build and deploy Node.js project to Azure Function App - caps360-funcs-prod
 
@@ -75,7 +81,7 @@ jobs:
           inlineScript: |
             az functionapp config appsettings set \
               --name caps360-funcs-prod \
-              --resource-group caps360-funcs-prod_group \
+              --resource-group caps360-backend-prod_group \
               --settings \
                 DATABASE_URL='${{ secrets.DATABASE_URL }}' \
                 AZURE_OPENAI_ENDPOINT='${{ secrets.AZURE_OPENAI_ENDPOINT }}' \

@@ -70,7 +70,7 @@ export const config = {
     },
 
     azureFunctions: {
-        welcomeEmailUrl: process.env.AZURE_WELCOME_EMAIL_FUNCTION_URL || '',
+        welcomeEmailUrl: process.env.AZURE_WELCOME_EMAIL_FUNCTION_URL || 'https://caps360-funcs-prod-abg0a3fmcqhrfrdx.southafricanorth-01.azurewebsites.net',
     },
 };
 

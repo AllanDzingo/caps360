@@ -6,7 +6,6 @@ import { AnalyticsEventType } from '../models/analytics.model';
 import { authLimiter } from '../middleware/rate-limit.middleware';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { UserRole } from '../models/user.model';
-import { query } from '../config/database';
 import logger from '../config/logger';
 import { sendWelcomeEmail } from '../services/email.service';
 

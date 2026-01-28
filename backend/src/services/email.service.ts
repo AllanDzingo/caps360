@@ -4,7 +4,7 @@ import logger from "../config/logger";
 // Defensive: Read all config from env at runtime
 const acsConnectionString = process.env.ACS_CONNECTION_STRING;
 
-const emailFromAddress = process.env.EMAIL_FROM_ADDRESS;
+const emailFromAddress = process.env.EMAIL_FROM_ADDRESS || 'DoNotReply@caps360.co.za';
 
 if (!acsConnectionString) {
   logger.warn("ACS_CONNECTION_STRING is not set. Welcome emails will not be sent.");
