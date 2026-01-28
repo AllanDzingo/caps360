@@ -3,34 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Loader2, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import axios from 'axios';
 
 
-const AVAILABLE_SUBJECTS = [
-    'Mathematics',
-    'Physical Sciences',
-    'Life Sciences',
-    'Accounting',
-    'Business Studies',
-    'Economics',
-    'History',
-    'Geography',
-    'English',
-    'Afrikaans',
-    'Engineering Graphics and Design',
-    'Information Technology',
-    'Computer Applications Technology',
-    'Tourism',
-    'Consumer Studies',
-];
+
+
 
 export const SubjectSelectionPage: React.FC = () => {
     const navigate = useNavigate();
     const { user, updateUser } = useAuthStore();
     const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+    const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [fetchingSubjects, setFetchingSubjects] = useState(true);
+
+    useEffect(() => {
+        // Fetch available subjects from backend
+        const fetchSubjects = async () => {
+            try {
+                const res = await axios.get('/api/subjects');
+                setAvailableSubjects(res.data.subjects || []);
+            } catch (err) {
+                setAvailableSubjects([]);
+            } finally {
+                setFetchingSubjects(false);
+            }
+        };
+        fetchSubjects();
+    }, []);
 
     useEffect(() => {
         // Pre-select user's existing subjects if any
@@ -103,25 +105,31 @@ export const SubjectSelectionPage: React.FC = () => {
                     )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                        {AVAILABLE_SUBJECTS.map((subject) => {
-                            const isSelected = selectedSubjects.includes(subject);
-                            return (
-                                <button
-                                    key={subject}
-                                    onClick={() => toggleSubject(subject)}
-                                    className={`p-4 rounded-lg border-2 transition-all ${
-                                        isSelected
-                                            ? 'border-brand-blue bg-blue-50 text-brand-blue'
-                                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-medium">{subject}</span>
-                                        {isSelected && <Check className="w-5 h-5" />}
-                                    </div>
-                                </button>
-                            );
-                        })}
+                        {fetchingSubjects ? (
+                            <div className="col-span-3 text-center text-gray-500">Loading subjects...</div>
+                        ) : availableSubjects.length === 0 ? (
+                            <div className="col-span-3 text-center text-gray-500">No subjects available.</div>
+                        ) : (
+                            availableSubjects.map((subject) => {
+                                const isSelected = selectedSubjects.includes(subject);
+                                return (
+                                    <button
+                                        key={subject}
+                                        onClick={() => toggleSubject(subject)}
+                                        className={`p-4 rounded-lg border-2 transition-all ${
+                                            isSelected
+                                                ? 'border-brand-blue bg-blue-50 text-brand-blue'
+                                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-medium">{subject}</span>
+                                            {isSelected && <Check className="w-5 h-5" />}
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        )}
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -142,10 +150,7 @@ export const SubjectSelectionPage: React.FC = () => {
                                 disabled={loading || selectedSubjects.length === 0}
                             >
                                 {loading ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Saving...
-                                    </>
+                                    'Saving...'
                                 ) : (
                                     'Continue to Dashboard'
                                 )}
