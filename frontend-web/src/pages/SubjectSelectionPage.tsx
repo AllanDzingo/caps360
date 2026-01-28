@@ -18,6 +18,11 @@ const AVAILABLE_SUBJECTS = [
     'Geography',
     'English',
     'Afrikaans',
+    'Engineering Graphics and Design',
+    'Information Technology',
+    'Computer Applications Technology',
+    'Tourism',
+    'Consumer Studies',
 ];
 
 export const SubjectSelectionPage: React.FC = () => {
