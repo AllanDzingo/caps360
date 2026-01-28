@@ -1,3 +1,19 @@
+  # Azure login for deployment jobs (add to jobs that deploy to Azure)
+  # To use, add this step before any Azure CLI or deploy steps:
+  # - name: Login to Azure
+  #   uses: azure/login@v1
+  #   with:
+  #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # If AZURE_CREDENTIALS secret is missing, add it in GitHub repo settings > Secrets and variables > Actions > New repository secret.
+  # Paste the following JSON (replace with your actual values):
+  # {
+  #   "clientId": "...",
+  #   "clientSecret": "...",
+  #   "subscriptionId": "...",
+  #   "tenantId": "...",
+  #   ...
+  # }
 name: Deploy to Azure
 
 on:

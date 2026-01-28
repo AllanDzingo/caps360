@@ -48,12 +48,11 @@ jobs:
         with:
           name: node-app
       
+      # Log in to Azure using the service principal credentials from the AZURE_CREDENTIALS secret
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_0A44F62DDE574A37B6CF77F0CFD7CB60 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DABA200BBCD34B92B5FD0FF2642CA51F }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EC63A561A0594BA7BEB74467697C62C7 }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Configure App Settings (Database)
         uses: azure/cli@v1

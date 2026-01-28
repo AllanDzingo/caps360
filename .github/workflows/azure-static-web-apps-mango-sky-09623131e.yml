@@ -1,3 +1,19 @@
+  # Azure login for deployment jobs (add to jobs that deploy to Azure)
+  # To use, add this step before any Azure CLI or deploy steps:
+  # - name: Login to Azure
+  #   uses: azure/login@v1
+  #   with:
+  #     creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # If AZURE_CREDENTIALS secret is missing, add it in GitHub repo settings > Secrets and variables > Actions > New repository secret.
+  # Paste the following JSON (replace with your actual values):
+  # {
+  #   "clientId": "...",
+  #   "clientSecret": "...",
+  #   "subscriptionId": "...",
+  #   "tenantId": "...",
+  #   ...
+  # }
 name: Azure Static Web Apps CI/CD
 
 on:
@@ -32,19 +48,20 @@ jobs:
                const coredemo = require('@actions/core')
                return await coredemo.getIDToken()
            result-encoding: string
+      # Build and deploy the React + Vite frontend to Azure Static Web Apps
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_MANGO_SKY_09623131E }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "./frontend-web" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "dist" # Built app content directory - optional
+          # Path to the frontend app root (React+Vite)
+          app_location: "frontend-web"
+          # If you have an API, set api_location, otherwise leave blank
+          api_location: ""
+          # Path to the build output directory (Vite default is 'dist')
+          output_location: "dist"
           github_id_token: ${{ steps.idtoken.outputs.result }}
-          ###### End of Repository/Build Configurations ######
         env:
           # Inject VITE_API_URL so Vite build has correct backend URL
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
