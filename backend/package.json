@@ -22,6 +22,7 @@
   "author": "CAPS360",
   "license": "PROPRIETARY",
   "dependencies": {
+    "@azure/communication-email": "^1.1.0",
     "@types/multer": "^2.0.0",
     "archiver": "^7.0.1",
     "axios": "^1.6.2",

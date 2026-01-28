@@ -7,6 +7,8 @@ import { authLimiter } from '../middleware/rate-limit.middleware';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
 import { UserRole } from '../models/user.model';
 import { query } from '../config/database';
+import logger from '../config/logger';
+import { sendWelcomeEmail } from '../services/email.service';
 
 const router = Router();
 
@@ -43,23 +45,12 @@ router.post(
             );
 
             // Trigger welcome email (Azure Function)
-            try {
-                const functionUrl = config.azureFunctions.welcomeEmailUrl;
-                if (functionUrl) {
-                    await fetch(functionUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            userId: result.user.id,
-                            email: result.user.email,
-                            firstName: result.user.firstName,
-                        }),
-                    });
-                }
-            } catch (emailError) {
-                logger.error('Failed to trigger welcome email:', emailError);
-                // Don't fail registration if email fails
-            }
+            // Log before sending welcome email
+            logger.info(`Triggering welcome email for user ${result.user.email}`);
+            sendWelcomeEmail({
+                to: result.user.email,
+                firstName: result.user.firstName
+            });
 
             res.status(201).json(result);
             return;

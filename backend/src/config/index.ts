@@ -67,10 +67,10 @@ export const config = {
 
     logging: {
         level: process.env.LOG_LEVEL || 'info',
+    },
 
-        azureFunctions: {
-            welcomeEmailUrl: process.env.AZURE_FUNCTION_WELCOME_EMAIL_URL || '',
-        },
+    azureFunctions: {
+        welcomeEmailUrl: process.env.AZURE_WELCOME_EMAIL_FUNCTION_URL || '',
     },
 };
 
