@@ -6,12 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Loader2, Check } from 'lucide-react';
 import axios from 'axios';
 
-interface Subject {
-    id: string;
-    name: string;
-    grade: number;
-    description?: string;
-}
 
 const AVAILABLE_SUBJECTS = [
     'Mathematics',

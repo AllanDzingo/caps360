@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Send, Loader2, Upload, Image as ImageIcon } from 'lucide-react';
+import { Send, Loader2, Upload } from 'lucide-react';
 import axios from 'axios';
 
 interface Message {

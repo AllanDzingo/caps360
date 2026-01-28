@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Check, Loader2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { PaystackButton } from 'react-paystack';
 
@@ -57,7 +57,16 @@ const tiers: PricingTier[] = [
     },
 ];
 
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '';
+const PAYSTACK_PUBLIC_KEY: string = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '';
+
+// Runtime guard and logging for Paystack config
+if (!PAYSTACK_PUBLIC_KEY) {
+    // eslint-disable-next-line no-console
+    console.error('[Paystack] VITE_PAYSTACK_PUBLIC_KEY is missing or undefined! Payment will not work.');
+} else {
+    // eslint-disable-next-line no-console
+    console.log(`[Paystack] Public key loaded: ****${PAYSTACK_PUBLIC_KEY.slice(-4)}`);
+}
 
 export const PaymentPage: React.FC = () => {
     const navigate = useNavigate();
@@ -87,7 +96,7 @@ export const PaymentPage: React.FC = () => {
             });
 
             if (response.ok) {
-                const data = await response.json();
+                await response.json();
                 // Update local user state
                 updateUser({ currentTier: tier });
                 // Redirect to subject selection
@@ -120,11 +129,19 @@ export const PaymentPage: React.FC = () => {
 
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {tiers.map((tier) => {
+                    // Validate required Paystack config values
+                    const reference = new Date().getTime().toString();
+                    const email = user.email;
+                    const amount = Number(tier.price) * 100;
+                    const publicKey = PAYSTACK_PUBLIC_KEY;
+                    const canRenderPaystack =
+                        !!publicKey && !!email && !!reference && amount > 0 && !isNaN(amount);
+
                     const config = {
-                        reference: new Date().getTime().toString(),
-                        email: user.email,
-                        amount: tier.price * 100, // Paystack expects amount in kobo (cents)
-                        publicKey: PAYSTACK_PUBLIC_KEY,
+                        reference,
+                        email,
+                        amount,
+                        publicKey,
                         metadata: {
                             custom_fields: [
                                 {
@@ -173,7 +190,7 @@ export const PaymentPage: React.FC = () => {
                                     ))}
                                 </ul>
 
-                                {PAYSTACK_PUBLIC_KEY ? (
+                                {canRenderPaystack ? (
                                     <PaystackButton
                                         {...config}
                                         text={processing ? 'Processing...' : 'Subscribe Now'}
@@ -184,13 +201,12 @@ export const PaymentPage: React.FC = () => {
                                                 ? 'bg-brand-blue text-white hover:bg-blue-700'
                                                 : 'bg-gray-900 text-white hover:bg-gray-800'
                                         } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        disabled={processing}
                                     />
                                 ) : (
                                     <Button
                                         variant={tier.highlighted ? 'premium' : 'primary'}
                                         className="w-full"
-                                        onClick={() => alert('Payment gateway not configured. Please contact administrator.')}
+                                        onClick={() => alert('Payment gateway not configured or missing required info. Please contact administrator.')}
                                     >
                                         Subscribe Now
                                     </Button>
