@@ -22,11 +22,17 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration for frontend
-// Production Azure Static Web Apps URL must be explicitly added for browser CORS to work
+// Production domains must be explicitly added for browser CORS to work
 const allowedOrigins = [
+    // Custom domain
+    'https://www.caps360.co.za',
+    'https://caps360.co.za',
+    // Azure Static Web Apps
+    'https://mango-sky-09623131e.1.azurestaticapps.net',
+    // Development
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
-    'https://mango-sky-09623131e.1.azurestaticapps.net', // Production Azure Static Web Apps frontend
+    'http://localhost:5173', // Vite default port
 ];
 
 const corsOptions = {
@@ -45,7 +51,12 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400, // Cache CORS preflight for 24 hours to reduce repeated checks
 };
+
+// Apply CORS middleware BEFORE routes
 app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS preflight requests
+app.options('*', cors(corsOptions));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
