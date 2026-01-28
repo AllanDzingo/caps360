@@ -89,7 +89,7 @@ jobs:
         run: npm run build
 
       - name: Upload backend artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: backend-dist
           path: backend/dist
@@ -122,7 +122,7 @@ jobs:
         run: npm run build
 
       - name: Upload frontend artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: frontend-dist
           path: frontend-web/dist
