@@ -1,7 +1,8 @@
 import { Router, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import multer from 'multer';
 import aiService from '../services/ai.service';
+import upload from '../middleware/upload.middleware';
+import { uploadBufferToBlob, isBlobUploadEnabled } from '../services/blob-storage.service';
 import analyticsService from '../services/analytics.service';
 import { AnalyticsEventType } from '../models/analytics.model';
 import { authenticate, AuthRequest } from '../middleware/auth.middleware';
@@ -9,7 +10,7 @@ import { requireFeature } from '../middleware/tier-access.middleware';
 import { aiLimiter } from '../middleware/rate-limit.middleware';
 
 const router = Router();
-const upload = multer({ dest: 'uploads/' });
+// ...existing code...
 
 /**
  * POST /api/ai/chat
@@ -67,40 +68,41 @@ router.post(
             if (!req.userId) {
                 return res.status(401).json({ error: 'Unauthorized' });
             }
-
             if (!req.file) {
                 return res.status(400).json({ error: 'No file uploaded' });
             }
-
+            if (!isBlobUploadEnabled()) {
+                return res.status(503).json({ error: 'File upload service unavailable' });
+            }
             const { conversationId } = req.body;
-            
-            // For now, just acknowledge the upload and return a placeholder
-            // In production, you'd process the file (OCR for images, parse PDFs, etc.)
             const fileName = req.file.originalname;
             const fileType = req.file.mimetype;
-
-            let reply = `I received your file "${fileName}". `;
-            
-            if (fileType.startsWith('image/')) {
-                reply += "I can see it's an image. In a full implementation, I would use OCR to extract text and help you with the content. For now, please describe what you need help with from this image.";
-            } else if (fileType === 'application/pdf') {
-                reply += "It's a PDF document. I would normally extract and analyze the text. Please tell me what specific help you need with this document.";
-            } else {
-                reply += "Please let me know what you'd like me to help you with regarding this file.";
+            // Upload to Azure Blob Storage
+            const uploadResult = await uploadBufferToBlob(req.file.buffer, fileName, fileType);
+            if (!uploadResult) {
+                return res.status(500).json({ error: 'Failed to upload file to storage' });
             }
-
+            let reply = `I received your file "${fileName}" and uploaded it to secure storage.`;
+            if (fileType.startsWith('image/')) {
+                reply += " I can see it's an image. In a full implementation, I would use OCR to extract text and help you with the content. For now, please describe what you need help with from this image.";
+            } else if (fileType === 'application/pdf') {
+                reply += " It's a PDF document. I would normally extract and analyze the text. Please tell me what specific help you need with this document.";
+            } else {
+                reply += " Please let me know what you'd like me to help you with regarding this file.";
+            }
             await analyticsService.trackEvent(
                 req.userId,
                 AnalyticsEventType.AI_CHAT_MESSAGE,
-                { fileType, conversationId },
+                { fileType, conversationId, blobName: uploadResult.blobName },
                 req.user.currentTier,
                 req.user.role
             );
-
-            res.json({ 
+            res.json({
                 reply,
                 conversationId: conversationId || `conv-${Date.now()}`,
-                fileProcessed: true
+                fileProcessed: true,
+                blobUrl: uploadResult.url,
+                blobName: uploadResult.blobName
             });
             return;
         } catch (error: any) {
