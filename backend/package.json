@@ -42,7 +42,8 @@
     "openai": "^6.15.0",
     "pg": "^8.11.3",
     "uuid": "^9.0.1",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "@azure/storage-blob": "^12.15.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

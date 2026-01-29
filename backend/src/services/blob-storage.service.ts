@@ -1,35 +1,48 @@
 import { BlobServiceClient, BlockBlobClient } from '@azure/storage-blob';
 import { v4 as uuidv4 } from 'uuid';
 
-const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
-const containerName = process.env.AZURE_STORAGE_CONTAINER;
 
 let blobServiceClient: BlobServiceClient | null = null;
 let containerClient: ReturnType<BlobServiceClient['getContainerClient']> | null = null;
+let blobConfigChecked = false;
 
-if (connectionString && containerName) {
+function ensureBlobClient() {
+  if (containerClient) return true;
+  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+  const containerName = process.env.AZURE_STORAGE_CONTAINER;
+  if (!connectionString || !containerName) {
+    if (!blobConfigChecked) {
+      // eslint-disable-next-line no-console
+      console.warn('Azure Blob Storage config missing: uploads will be disabled.');
+      blobConfigChecked = true;
+    }
+    return false;
+  }
   try {
     blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
     containerClient = blobServiceClient.getContainerClient(containerName);
+    return true;
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Azure Blob Storage initialization failed:', err);
+    if (!blobConfigChecked) {
+      // eslint-disable-next-line no-console
+      console.warn('Azure Blob Storage initialization failed:', err);
+      blobConfigChecked = true;
+    }
     blobServiceClient = null;
     containerClient = null;
+    return false;
   }
-} else {
-  // eslint-disable-next-line no-console
-  console.error('Azure Blob Storage config missing: uploads will be disabled.');
 }
+
 
 export async function uploadBufferToBlob(
   buffer: Buffer,
   originalName: string,
   mimetype: string
 ): Promise<{ url: string; blobName: string } | null> {
-  if (!containerClient) {
+  if (!ensureBlobClient() || !containerClient) {
     // eslint-disable-next-line no-console
-    console.error('Azure Blob Storage not configured. Upload skipped.');
+    console.warn('Azure Blob Storage not configured. Upload skipped.');
     return null;
   }
   const ext = originalName.split('.').pop();
@@ -45,5 +58,5 @@ export async function uploadBufferToBlob(
 }
 
 export function isBlobUploadEnabled() {
-  return !!containerClient;
+  return ensureBlobClient() && !!containerClient;
 }
