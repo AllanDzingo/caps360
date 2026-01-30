@@ -49,14 +49,19 @@ export class ProgressService {
      * Get aggregated progress for Dashboard
      */
     async getDashboardProgress(userId: string): Promise<any> {
+        // Get executed lesson count vs total (simplistic)
+        // Or get subject progress levels
         try {
-            // Get executed lesson count vs total (simplistic)
-            // Or get subject progress levels
             const { rows } = await query(`
                 SELECT course_id, percent_complete 
                 FROM user_subject_progress 
                 WHERE user_id = $1
             `, [userId]);
+
+            if (!rows || rows.length === 0) {
+                // No progress yet, return empty object
+                return {};
+            }
 
             const progressMap = rows.reduce((acc: any, row: any) => {
                 acc[row.course_id] = row.percent_complete;
@@ -66,7 +71,8 @@ export class ProgressService {
             return progressMap;
         } catch (error) {
             logger.error(`Error fetching dashboard progress for user ${userId}`, error);
-            throw error;
+            // Instead of throwing, return empty object for no data
+            return {};
         }
     }
 

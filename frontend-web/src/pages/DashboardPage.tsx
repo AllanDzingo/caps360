@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useAuthStore();
+    const { user, isAuthenticated } = useAuthStore();
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [progress, setProgress] = useState<ProgressMap>({});
     const [loading, setLoading] = useState(true);
@@ -19,20 +19,19 @@ export const DashboardPage: React.FC = () => {
     const needsSubjects = !user?.subjects || user.subjects.length === 0;
 
     useEffect(() => {
+        if (!isAuthenticated || !user?.id) {
+            navigate('/login');
+            return;
+        }
         const fetchData = async () => {
             try {
                 // Default to Grade 10 if user has no grade, or use user's grade
                 const gradeToFetch = user?.grade || 10;
-
                 // Fetch subjects and progress in parallel
-                // User ID hardcoded to 'demo-user-id' for now as per plan
-                const demoUserId = 'demo-user-id';
-
                 const [subjectsData, progressData] = await Promise.all([
                     contentApi.getDashboard(gradeToFetch),
-                    progressApi.getDashboardProgress(demoUserId)
+                    progressApi.getDashboardProgress(user.id)
                 ]);
-
                 setSubjects(subjectsData);
                 setProgress(progressData);
             } catch (err) {
@@ -42,9 +41,8 @@ export const DashboardPage: React.FC = () => {
                 setLoading(false);
             }
         };
-
         fetchData();
-    }, [user]);
+    }, [user, isAuthenticated, navigate]);
 
     if (loading) {
         return (

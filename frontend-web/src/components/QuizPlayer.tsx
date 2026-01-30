@@ -25,6 +25,9 @@ interface QuizState {
 export const QuizPlayer: React.FC = () => {
     const { lessonId } = useParams<{ lessonId: string }>();
     const navigate = useNavigate();
+    // Get authenticated user
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { user, isAuthenticated } = require('../store/authStore').useAuthStore();
 
     const [loading, setLoading] = useState(true);
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -80,12 +83,11 @@ export const QuizPlayer: React.FC = () => {
             setLoading(false);
 
             // Mark lesson as started
-            if (lessonId) {
-                // TODO: Use real user ID
-                progressApi.startLesson('demo-user-id', lessonId).catch(console.error);
+            if (lessonId && isAuthenticated && user?.id) {
+                progressApi.startLesson(user.id, lessonId).catch(console.error);
             }
         }, 1000);
-    }, [lessonId]);
+    }, [lessonId, isAuthenticated, user]);
 
     const handleAnswer = (optionIndex: number) => {
         if (isAnswered) return;
@@ -137,13 +139,17 @@ export const QuizPlayer: React.FC = () => {
 
     const finishQuiz = async () => {
         setQuizComplete(true);
-        if (lessonId) {
+        if (lessonId && isAuthenticated && user?.id) {
             // Calculate final score percentage
             const finalScore = Math.round((gameState.score / questions.length) * 100);
-            await progressApi.completeLesson('demo-user-id', lessonId, finalScore);
+            await progressApi.completeLesson(user.id, lessonId, finalScore);
         }
     };
 
+    if (!isAuthenticated || !user?.id) {
+        navigate('/login');
+        return null;
+    }
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50">
