@@ -8,7 +8,7 @@ export class ProgressController {
      * Start a lesson
      * POST /api/progress/lessons/:id/start
      */
-    async startLesson(req: Request, res: Response): Promise<void> {
+    async startLesson(req: Request, res: Response): Promise<Response> {
         try {
             const userId = req.body.userId;
             const { id } = req.params;
@@ -21,10 +21,10 @@ export class ProgressController {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
             await progressService.startLesson(userId, id);
-            res.json({ success: true, message: 'Lesson started' });
+            return res.json({ success: true, message: 'Lesson started' });
         } catch (error) {
             logger.error(`Start lesson error`, error);
-            res.status(500).json({ success: false, message: 'Failed to start lesson' });
+            return res.status(500).json({ success: false, message: 'Failed to start lesson' });
         }
     }
 
@@ -33,7 +33,7 @@ export class ProgressController {
      * POST /api/progress/lessons/:id/complete
      * Body: { quizScore?: number }
      */
-    async completeLesson(req: Request, res: Response): Promise<void> {
+    async completeLesson(req: Request, res: Response): Promise<Response> {
         try {
             const userId = req.body.userId;
             const { id } = req.params;
@@ -46,10 +46,10 @@ export class ProgressController {
                 return res.status(404).json({ success: false, message: 'User not found' });
             }
             await progressService.completeLesson(userId, id, quizScore);
-            res.json({ success: true, message: 'Lesson completed' });
+            return res.json({ success: true, message: 'Lesson completed' });
         } catch (error) {
             logger.error(`Complete lesson error`, error);
-            res.status(500).json({ success: false, message: 'Failed to complete lesson' });
+            return res.status(500).json({ success: false, message: 'Failed to complete lesson' });
         }
     }
 
@@ -57,7 +57,7 @@ export class ProgressController {
      * Get Dashboard Progress
      * GET /api/progress/dashboard
      */
-    async getDashboardProgress(req: Request, res: Response): Promise<void> {
+    async getDashboardProgress(req: Request, res: Response): Promise<Response> {
         try {
             const userId = req.query.userId as string;
             if (!userId) {
@@ -72,10 +72,10 @@ export class ProgressController {
             if (!progress || Object.keys(progress).length === 0) {
                 return res.status(200).json({ success: true, data: {} });
             }
-            res.json({ success: true, data: progress });
+            return res.json({ success: true, data: progress });
         } catch (error) {
             logger.error(`Dashboard progress error`, error);
-            res.status(500).json({ success: false, message: 'Failed to get dashboard progress' });
+            return res.status(500).json({ success: false, message: 'Failed to get dashboard progress' });
         }
     }
 }
