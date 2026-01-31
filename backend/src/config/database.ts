@@ -4,7 +4,7 @@ import logger from './logger';
 
 const sslConfig = config.database.ssl ? { rejectUnauthorized: false } : undefined;
 
-const pool = new Pool({
+export const pool = new Pool({
     // Prefer a single connection string when provided (Azure App Service / Flexible Server)
     ...(config.database.connectionString
         ? { connectionString: config.database.connectionString }
@@ -19,7 +19,7 @@ const pool = new Pool({
     // Connection pool settings
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-    connectionTimeoutMillis: 2000, // How long to wait for a connection
+    connectionTimeoutMillis: 10000, // How long to wait for a connection
 });
 
 // Event listeners for pool health

@@ -1,6 +1,9 @@
 import { Client } from 'pg';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Connection string from environment variable
 const connectionString = process.env.DATABASE_URL || '';

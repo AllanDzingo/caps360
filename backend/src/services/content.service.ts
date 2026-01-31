@@ -102,6 +102,9 @@ export class ContentService {
             description: row.description,
             grade: row.grade,
             subject: row.subject,
+            curriculum: row.curriculum,
+            phase: row.phase,
+            active: row.active,
             thumbnailUrl: row.thumbnail_url,
             accessTier: row.access_tier,
             lessonIds: [], // Populated separately if needed
@@ -117,6 +120,7 @@ export class ContentService {
             courseId: row.course_id,
             title: row.title,
             description: row.description,
+            grade: row.grade,
             order: row.order,
             createdAt: row.created_at,
             updatedAt: row.updated_at

@@ -11,7 +11,8 @@
     "test:watch": "jest --watch",
     "test:integration": "jest --config jest.integration.config.js",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "seed:caps": "tsx src/db/seeds/caps-curriculum.seed.ts"
   },
   "keywords": [
     "education",

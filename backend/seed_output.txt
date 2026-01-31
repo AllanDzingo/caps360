@@ -1,0 +1,6 @@
+
+> caps360-backend@1.0.0 seed:caps
+> tsx src/db/seeds/caps-curriculum.seed.ts
+
+[32minfo[39m: Starting CAPS curriculum seeding... {"service":"caps360-api","timestamp":"2026-01-31T06:50:18.468Z"}
+Terminate batch job (Y/N)? Terminate batch job (Y/N)? 

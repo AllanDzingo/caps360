@@ -30,10 +30,14 @@ create table if not exists public.courses (
   description text,
   grade integer,
   subject text,
+  curriculum text default 'CAPS',
+  phase text,
+  active boolean default true,
   thumbnail_url text,
   access_tier text default 'study_help',
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  unique(title, grade, curriculum)
 );
 
 -- TOPICS Table
@@ -42,9 +46,11 @@ create table if not exists public.topics (
   course_id uuid references public.courses(id) not null,
   title text not null,
   description text,
+  grade integer,
   "order" integer,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  unique(course_id, title)
 );
 
 -- LESSONS Table

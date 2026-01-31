@@ -11,6 +11,9 @@ export interface Course {
     description: string;
     grade: number;
     subject: string;
+    curriculum?: string;
+    phase?: string;
+    active?: boolean;
     thumbnailUrl?: string;
 
     // Access control
@@ -30,6 +33,7 @@ export interface Topic {
     courseId: string;
     title: string;
     description?: string;
+    grade?: number;
     order: number;
     createdAt: Date;
     updatedAt: Date;
