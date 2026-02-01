@@ -37,6 +37,10 @@ export const contentApi = {
         const response = await api.get<{ success: boolean; data: any }>('/subjects/' + id);
         return response.data.data;
     },
+    getSubjectTopics: async (id: string) => {
+        const response = await api.get<{ success: boolean; data: any[] }>('/subjects/' + id + '/topics');
+        return response.data.data;
+    },
     getTopic: async (id: string) => {
         const response = await api.get<{ success: boolean; data: any }>('/topics/' + id);
         return response.data.data;

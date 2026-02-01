@@ -56,6 +56,25 @@ export class ContentService {
     }
 
     /**
+     * Get topics with lessons for a specific subject (course)
+     */
+    async getTopicsWithLessonsBySubject(courseId: string): Promise<any[]> {
+        try {
+            const topics = await this.getTopicsBySubject(courseId);
+
+            const topicsWithLessons = await Promise.all(topics.map(async (topic) => {
+                const lessons = await this.getLessonsByTopic(topic.id);
+                return { ...topic, lessons };
+            }));
+
+            return topicsWithLessons;
+        } catch (error) {
+            logger.error(`Error fetching topics with lessons for course ${courseId}`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Get lessons for a specific topic
      */
     async getLessonsByTopic(topicId: string): Promise<Lesson[]> {

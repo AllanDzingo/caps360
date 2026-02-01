@@ -46,20 +46,70 @@ export class ContentController {
     }
 
     /**
-     * Get Subject Details (with Topics)
+     * Get Subject Details (Metadata Only)
      */
     async getSubject(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;
-            const structure = await contentService.getSubjectStructure(id);
+
+            // Validate UUID
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(id)) {
+                res.status(400).json({ success: false, message: 'Invalid subject ID format' });
+                return;
+            }
+
+            const subject = await contentService.getSubjectById(id);
+
+            if (!subject) {
+                res.status(404).json({ success: false, message: 'Subject not found' });
+                return;
+            }
 
             res.json({
                 success: true,
-                data: structure
+                data: subject
             });
         } catch (error) {
-            logger.error(`Subject error ${req.params.id}`, error);
+            logger.error(`Subject metadata error ${req.params.id}`, error);
             res.status(500).json({ success: false, message: 'Failed to load subject' });
+        }
+    }
+
+    /**
+     * Get Topics for a Subject
+     */
+    async getSubjectTopics(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+
+            // Validate UUID
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(id)) {
+                res.status(400).json({ success: false, message: 'Invalid subject ID format' });
+                return;
+            }
+
+            // Check if subject exists first
+            const subject = await contentService.getSubjectById(id);
+            if (!subject) {
+                res.status(404).json({ success: false, message: 'Subject not found' });
+                return;
+            }
+
+            const topics = await contentService.getTopicsWithLessonsBySubject(id);
+
+            if (topics.length === 0) {
+                logger.warn(`Subject ${id} has no associated topics in DB`);
+            }
+
+            res.json({
+                success: true,
+                data: topics
+            });
+        } catch (error) {
+            logger.error(`Subject topics error ${req.params.id}`, error);
+            res.status(500).json({ success: false, message: 'Failed to load topics' });
         }
     }
 
