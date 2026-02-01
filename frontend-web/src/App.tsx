@@ -30,6 +30,7 @@ import { QuizPlayer } from './components/QuizPlayer';
 import { PaymentPage } from './pages/PaymentPage';
 import { SubjectSelectionPage } from './pages/SubjectSelectionPage';
 import { AIChatPage } from './pages/AIChatPage';
+import { CoursesPage } from './pages/CoursesPage';
 // ... previous imports
 
 // Protected Route Component
@@ -77,6 +78,14 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <DashboardPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/courses"
+                            element={
+                                <ProtectedRoute>
+                                    <CoursesPage />
                                 </ProtectedRoute>
                             }
                         />
