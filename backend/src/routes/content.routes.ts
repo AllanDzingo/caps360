@@ -8,6 +8,7 @@ const router = Router();
 // router.use(authenticate); 
 
 router.get('/dashboard', (req, res) => contentController.getDashboard(req, res));
+router.get('/subjects', (req, res) => contentController.getSubjects(req, res));
 router.get('/subjects/:id', (req, res) => contentController.getSubject(req, res));
 router.get('/topics/:id', (req, res) => contentController.getTopic(req, res));
 

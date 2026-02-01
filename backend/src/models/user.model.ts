@@ -26,8 +26,9 @@ export interface User {
     lastName: string;
     role: UserRole;
     grade?: number; // For students
-    subjects?: string[]; // For teachers
+    subjects?: string[]; // For students/teachers
     childrenIds?: string[]; // For parents
+    enrollmentStatus?: 'none' | 'pending' | 'active' | 'rejected';
 
     // Subscription info
     subscriptionId?: string;
@@ -98,4 +99,7 @@ export interface UserResponse {
     trialEndDate?: string;
     welcomePremium: boolean;
     welcomePremiumEndDate?: string;
+    grade?: number;
+    subjects?: string[];
+    enrollmentStatus?: string;
 }

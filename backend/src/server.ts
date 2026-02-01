@@ -15,6 +15,7 @@ import paymentRoutes from './routes/payment.routes';
 import aiRoutes from './routes/ai.routes';
 import contentRoutes from './routes/content.routes';
 import progressRoutes from './routes/progress.routes';
+import contentController from './controllers/content.controller';
 
 const app = express();
 
@@ -98,6 +99,7 @@ app.use('/api/ai', aiRoutes);
 
 app.use('/api/content', contentRoutes);
 app.use('/api/progress', progressRoutes);
+app.get('/api/subjects', (req, res) => contentController.getSubjects(req, res));
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

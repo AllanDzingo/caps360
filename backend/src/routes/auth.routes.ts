@@ -120,6 +120,7 @@ router.patch(
             if (subjects !== undefined) {
                 updates.push(`subjects = $${paramIndex++}`);
                 values.push(subjects);
+                updates.push(`enrollment_status = 'pending'`);
             }
 
             if (grade !== undefined) {
@@ -138,7 +139,7 @@ router.patch(
                 UPDATE users 
                 SET ${updates.join(', ')}
                 WHERE id = $${paramIndex}
-                RETURNING id, email, first_name, last_name, role, grade, subjects, current_tier
+                RETURNING id, email, first_name, last_name, role, grade, subjects, current_tier, enrollment_status, trial_premium, trial_end_date, welcome_premium, welcome_premium_end_date
             `;
 
             const result = await query(updateQuery, values);
@@ -147,7 +148,11 @@ router.patch(
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            res.json({ user: result.rows[0] });
+            const dbUser = result.rows[0];
+            // @ts-ignore - mapDbUserToModel expects full user but we have enough for response
+            const responseUser = authService.toUserResponse(authService.mapDbUserToModel(dbUser));
+
+            res.json({ user: responseUser });
             return;
         } catch (error: any) {
             res.status(500).json({ error: error.message });

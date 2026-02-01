@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Check } from 'lucide-react';
-import axios from 'axios';
+import { Check, Loader2 } from 'lucide-react';
+import api from '../lib/api';
 
 
 
@@ -23,16 +23,21 @@ export const SubjectSelectionPage: React.FC = () => {
         // Fetch available subjects from backend
         const fetchSubjects = async () => {
             try {
-                const res = await axios.get('/api/subjects');
+                const grade = user?.grade || 10;
+                const res = await api.get('/content/subjects', { params: { grade } });
                 setAvailableSubjects(res.data.subjects || []);
             } catch (err) {
+                console.error('Failed to fetch subjects:', err);
                 setAvailableSubjects([]);
+                setError('Failed to load available subjects.');
             } finally {
                 setFetchingSubjects(false);
             }
         };
-        fetchSubjects();
-    }, []);
+        if (user) {
+            fetchSubjects();
+        }
+    }, [user]);
 
     useEffect(() => {
         // Pre-select user's existing subjects if any
@@ -59,19 +64,16 @@ export const SubjectSelectionPage: React.FC = () => {
         setError(null);
 
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.patch(
-                '/api/auth/profile',
-                { subjects: selectedSubjects },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+            const response = await api.patch(
+                '/auth/profile',
+                { subjects: selectedSubjects }
             );
 
-            if (response.data) {
-                updateUser({ subjects: selectedSubjects });
+            if (response.data && response.data.user) {
+                updateUser({
+                    subjects: response.data.user.subjects,
+                    enrollmentStatus: response.data.user.enrollment_status
+                });
                 navigate('/dashboard');
             }
         } catch (err: any) {
@@ -106,7 +108,10 @@ export const SubjectSelectionPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
                         {fetchingSubjects ? (
-                            <div className="col-span-3 text-center text-gray-500">Loading subjects...</div>
+                            <div className="col-span-3 text-center py-12">
+                                <Loader2 className="w-10 h-10 animate-spin text-brand-blue mx-auto mb-4" />
+                                <p className="text-gray-500">Loading subjects for Grade {user.grade || 10}...</p>
+                            </div>
                         ) : availableSubjects.length === 0 ? (
                             <div className="col-span-3 text-center text-gray-500">No subjects available.</div>
                         ) : (
@@ -116,11 +121,10 @@ export const SubjectSelectionPage: React.FC = () => {
                                     <button
                                         key={subject}
                                         onClick={() => toggleSubject(subject)}
-                                        className={`p-4 rounded-lg border-2 transition-all ${
-                                            isSelected
-                                                ? 'border-brand-blue bg-blue-50 text-brand-blue'
-                                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                                        }`}
+                                        className={`p-4 rounded-lg border-2 transition-all ${isSelected
+                                            ? 'border-brand-blue bg-blue-50 text-brand-blue'
+                                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                                            }`}
                                     >
                                         <div className="flex items-center justify-between">
                                             <span className="font-medium">{subject}</span>

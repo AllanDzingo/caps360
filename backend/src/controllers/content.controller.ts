@@ -27,6 +27,25 @@ export class ContentController {
     }
 
     /**
+     * Get All Available Subjects for a grade
+     * Query Params: grade
+     */
+    async getSubjects(req: Request, res: Response): Promise<void> {
+        try {
+            const grade = req.query.grade ? parseInt(req.query.grade as string) : 10;
+            const subjects = await contentService.getSubjectsByGrade(grade);
+
+            res.json({
+                success: true,
+                subjects: subjects.map(s => s.title)
+            });
+        } catch (error) {
+            logger.error('Get subjects error', error);
+            res.status(500).json({ success: false, message: 'Failed to load subjects' });
+        }
+    }
+
+    /**
      * Get Subject Details (with Topics)
      */
     async getSubject(req: Request, res: Response): Promise<void> {
