@@ -1,5 +1,5 @@
 import React from 'react';
-import { Subject } from '../lib/api';
+import { Subject } from '@/services/api';
 import { ProgressRing } from './ProgressRing';
 import { Link } from 'react-router-dom';
 

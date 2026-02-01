@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { contentApi } from '../lib/api';
+import { contentApi } from '@/services/api';
 import { Loader2, ChevronLeft, BookOpen } from 'lucide-react';
 
 export const SubjectView: React.FC = () => {

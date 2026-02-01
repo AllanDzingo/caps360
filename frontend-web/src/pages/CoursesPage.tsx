@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { contentApi, progressApi, Subject, ProgressMap, default as api } from '../lib/api';
+import { contentApi, progressApi, Subject, ProgressMap, default as api } from '@/services/api';
 import { SubjectTile } from '../components/SubjectTile';
 import { Loader2, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';

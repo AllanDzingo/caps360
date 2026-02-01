@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { contentApi, progressApi, Subject, ProgressMap } from '../lib/api';
+import { contentApi, progressApi, Subject, ProgressMap } from '@/services/api';
 import { SubjectTile } from '../components/SubjectTile';
 import { Loader2, MessageSquare, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';

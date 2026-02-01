@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import api from '@/lib/api';
+import api from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';

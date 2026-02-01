@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Check, Loader2 } from 'lucide-react';
-import api from '../lib/api';
+import api from '@/services/api';
 
 
 
@@ -18,6 +18,10 @@ export const SubjectSelectionPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fetchingSubjects, setFetchingSubjects] = useState(true);
+
+    if (import.meta.env.DEV) {
+        console.log('API BASE URL:', import.meta.env.VITE_API_BASE_URL);
+    }
 
     useEffect(() => {
         // Fetch available subjects from backend

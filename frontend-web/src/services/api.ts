@@ -1,32 +1,11 @@
 import axios from 'axios';
 
-// Build API base URL from environment
-const rawApiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-const normalizedBase = rawApiUrl ? rawApiUrl.replace(/\/$/, '') : '';
-
-if (!rawApiUrl) {
-    if (import.meta.env.PROD) {
-        throw new Error('VITE_API_BASE_URL must be set in production. Configure it in your environment variables.');
-    }
-    console.warn('VITE_API_BASE_URL is not set. Using http://localhost:8080 for development.');
-}
-
-// In production, VITE_API_BASE_URL must be set. In dev, use localhost:8080 if not set.
-// We keep both for compatibility, but the user requested VITE_API_BASE_URL specifically.
-export const API_BASE_URL = normalizedBase || 'http://localhost:8080';
-const API_URL = `${API_BASE_URL}/api`;
-
 const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    baseURL: import.meta.env.VITE_API_BASE_URL,
 });
 
-// Auth interceptor
+// Maintain current authentication logic
 api.interceptors.request.use((config) => {
-    // Get token from localStorage directly to avoid circular dependency with store
-    // or use store.getState().token if imported cautiously
     const token = localStorage.getItem('auth_token');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -59,7 +38,7 @@ export const contentApi = {
         return response.data.data;
     },
     getTopic: async (id: string) => {
-        const response = await api.get<{ success: boolean; data: any }>('/content/topics/' + id);
+        const response = await api.get<{ success: boolean; data: any }>('/topics/' + id);
         return response.data.data;
     }
 };
@@ -78,7 +57,6 @@ export const progressApi = {
 };
 
 export const subscriptionAPI = {
-    // Placeholder - will implement properly later
     getSubscriptions: async () => [],
     subscribe: async (plan: string) => { console.log('Subscribe', plan); },
     startTrial: async () => { console.log('Start Trial'); }

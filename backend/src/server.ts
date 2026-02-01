@@ -93,14 +93,24 @@ app.get('/', (_req: Request, res: Response) => {
     });
 });
 
-// API routes
+// API routes (both /api for legacy/Functions and root for standardized frontend)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/subscriptions', subscriptionRoutes);
+
 app.use('/api/payments', paymentRoutes);
+app.use('/payments', paymentRoutes);
+
 app.use('/api/ai', aiRoutes);
+app.use('/ai', aiRoutes);
 
 app.use('/api/content', contentRoutes);
+app.use('/content', contentRoutes);
+
 app.use('/api/progress', progressRoutes);
+app.use('/progress', progressRoutes);
 app.get('/api/subjects', (req, res) => contentController.getSubjects(req, res));
 app.get('/api/dashboard', (req, res) => contentController.getDashboard(req, res));
 app.get('/api/topics/:id', (req, res) => contentController.getTopic(req, res));

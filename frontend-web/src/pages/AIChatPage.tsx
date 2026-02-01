@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Send, Loader2, Upload } from 'lucide-react';
-import axios from 'axios';
+import api from '@/services/api';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -53,17 +53,11 @@ export const AIChatPage: React.FC = () => {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.post(
-                '/api/ai/chat',
+            const response = await api.post(
+                '/ai/chat',
                 {
                     message: inputMessage,
                     conversationId,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
                 }
             );
 
@@ -101,10 +95,8 @@ export const AIChatPage: React.FC = () => {
                 formData.append('conversationId', conversationId);
             }
 
-            const token = localStorage.getItem('auth_token');
-            const response = await axios.post('/api/ai/upload', formData, {
+            const response = await api.post('/ai/upload', formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',
                 },
             });
@@ -156,11 +148,10 @@ export const AIChatPage: React.FC = () => {
                             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             <div
-                                className={`max-w-[70%] p-3 rounded-lg ${
-                                    message.role === 'user'
+                                className={`max-w-[70%] p-3 rounded-lg ${message.role === 'user'
                                         ? 'bg-brand-blue text-white'
                                         : 'bg-gray-100 text-gray-900'
-                                }`}
+                                    }`}
                             >
                                 <p className="whitespace-pre-wrap">{message.content}</p>
                                 <span className="text-xs opacity-70 mt-1 block">

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Check } from 'lucide-react';
+import api from '@/services/api';
 import { formatCurrency } from '@/lib/utils';
 import { PaystackButton } from 'react-paystack';
 
@@ -82,21 +83,13 @@ export const PaymentPage: React.FC = () => {
         setProcessing(true);
         try {
             // Call backend to verify payment and update subscription
-            const response = await fetch('/api/subscriptions/paid/start', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
-                },
-                body: JSON.stringify({
-                    tier,
-                    paystackSubscriptionId: reference.reference,
-                    paystackCustomerCode: reference.trans,
-                }),
+            const response = await api.post('/subscriptions/paid/start', {
+                tier,
+                paystackSubscriptionId: reference.reference,
+                paystackCustomerCode: reference.trans,
             });
 
-            if (response.ok) {
-                await response.json();
+            if (response.status === 200 || response.status === 201) {
                 // Update local user state
                 updateUser({ currentTier: tier });
                 // Redirect to subject selection
@@ -196,11 +189,10 @@ export const PaymentPage: React.FC = () => {
                                         text={processing ? 'Processing...' : 'Subscribe Now'}
                                         onSuccess={(reference) => handlePaystackSuccess(reference, tier.tier)}
                                         onClose={handlePaystackClose}
-                                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
-                                            tier.highlighted
-                                                ? 'bg-brand-blue text-white hover:bg-blue-700'
-                                                : 'bg-gray-900 text-white hover:bg-gray-800'
-                                        } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${tier.highlighted
+                                            ? 'bg-brand-blue text-white hover:bg-blue-700'
+                                            : 'bg-gray-900 text-white hover:bg-gray-800'
+                                            } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     />
                                 ) : (
                                     <Button
