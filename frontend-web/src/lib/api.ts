@@ -1,18 +1,20 @@
 import axios from 'axios';
 
 // Build API base URL from environment
-const rawApiUrl = import.meta.env.VITE_API_URL;
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
 const normalizedBase = rawApiUrl ? rawApiUrl.replace(/\/$/, '') : '';
 
 if (!rawApiUrl) {
     if (import.meta.env.PROD) {
-        throw new Error('VITE_API_URL must be set in production. Configure it in your environment variables.');
+        throw new Error('VITE_API_BASE_URL must be set in production. Configure it in your environment variables.');
     }
-    console.warn('VITE_API_URL is not set. Using http://localhost:8080 for development.');
+    console.warn('VITE_API_BASE_URL is not set. Using http://localhost:8080 for development.');
 }
 
-// In production, VITE_API_URL must be set. In dev, use localhost:8080 if not set.
-const API_URL = rawApiUrl ? `${normalizedBase}/api` : 'http://localhost:8080/api';
+// In production, VITE_API_BASE_URL must be set. In dev, use localhost:8080 if not set.
+// We keep both for compatibility, but the user requested VITE_API_BASE_URL specifically.
+export const API_BASE_URL = normalizedBase || 'http://localhost:8080';
+const API_URL = `${API_BASE_URL}/api`;
 
 const api = axios.create({
     baseURL: API_URL,
@@ -49,11 +51,11 @@ export interface ProgressMap {
 export const contentApi = {
     getDashboard: async (grade?: number) => {
         const params = grade ? { grade } : {};
-        const response = await api.get<{ success: boolean; data: Subject[] }>('/content/dashboard', { params });
+        const response = await api.get<{ success: boolean; data: Subject[] }>('/dashboard', { params });
         return response.data.data;
     },
     getSubject: async (id: string) => {
-        const response = await api.get<{ success: boolean; data: any }>('/content/subjects/' + id);
+        const response = await api.get<{ success: boolean; data: any }>('/subjects/' + id);
         return response.data.data;
     },
     getTopic: async (id: string) => {

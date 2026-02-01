@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { contentApi, progressApi, Subject, ProgressMap } from '../lib/api';
+import { contentApi, progressApi, Subject, ProgressMap, default as api } from '../lib/api';
 import { SubjectTile } from '../components/SubjectTile';
 import { Loader2, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/Card';
 
 export const CoursesPage: React.FC = () => {
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAuthStore();
+    const { user, isAuthenticated, updateUser } = useAuthStore();
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [progress, setProgress] = useState<ProgressMap>({});
     const [loading, setLoading] = useState(true);
@@ -23,13 +23,18 @@ export const CoursesPage: React.FC = () => {
 
         const fetchData = async () => {
             try {
-                // Fetch subjects and progress in parallel
-                // Default to Grade 10 if user has no grade
-                const gradeToFetch = user?.grade || 10;
+                // Fetch latest user profile to ensure we have the correct grade
+                const profileRes = await api.get('/users/me');
+                if (profileRes.data && profileRes.data.user) {
+                    updateUser(profileRes.data.user);
+                }
+
+                const currentUser = profileRes.data.user || user;
+                const gradeToFetch = currentUser?.grade || 10;
 
                 const [subjectsData, progressData] = await Promise.all([
                     contentApi.getDashboard(gradeToFetch),
-                    progressApi.getDashboardProgress(user?.id || '')
+                    progressApi.getDashboardProgress(currentUser?.id || '')
                 ]);
 
                 // Filter subjects to show only those the user is enrolled in
@@ -98,7 +103,7 @@ export const CoursesPage: React.FC = () => {
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">My Courses</h1>
                     <p className="text-gray-600 mb-6 text-lg">
-                        No courses yet. Enroll in subjects to start learning.
+                        No subjects available for your grade. Please enroll to start learning.
                     </p>
                     <div className="flex justify-center space-x-4">
                         <Button

@@ -30,6 +30,8 @@ const allowedOrigins = [
     'https://caps360.co.za',
     // Azure Static Web Apps
     'https://mango-sky-09623131e.1.azurestaticapps.net',
+    // Production backend (for completeness if hitting its root)
+    'https://caps360-backend-prod-gehwe9edcxcqdffm.southafricanorth-01.azurewebsites.net',
     // Development
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'http://localhost:3000',
@@ -100,6 +102,23 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/progress', progressRoutes);
 app.get('/api/subjects', (req, res) => contentController.getSubjects(req, res));
+app.get('/api/dashboard', (req, res) => contentController.getDashboard(req, res));
+app.get('/api/topics/:id', (req, res) => contentController.getTopic(req, res));
+
+// Production aliases
+app.get('/subjects', (req, res) => contentController.getSubjects(req, res));
+app.get('/dashboard', (req, res) => contentController.getDashboard(req, res));
+import { authenticate, AuthRequest } from './middleware/auth.middleware';
+import authService from './services/auth.service';
+
+app.get('/users/me', authenticate, (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    return res.json({ user: authService.toUserResponse(req.user) });
+});
+app.get('/api/users/me', authenticate, (req: AuthRequest, res: Response) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    return res.json({ user: authService.toUserResponse(req.user) });
+});
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

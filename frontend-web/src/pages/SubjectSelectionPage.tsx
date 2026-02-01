@@ -24,7 +24,7 @@ export const SubjectSelectionPage: React.FC = () => {
         const fetchSubjects = async () => {
             try {
                 const grade = user?.grade || 10;
-                const res = await api.get('/content/subjects', { params: { grade } });
+                const res = await api.get('/subjects', { params: { grade } });
                 setAvailableSubjects(res.data.subjects || []);
             } catch (err) {
                 console.error('Failed to fetch subjects:', err);
