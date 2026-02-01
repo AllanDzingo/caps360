@@ -20,7 +20,7 @@ export const SubjectSelectionPage: React.FC = () => {
     const [fetchingSubjects, setFetchingSubjects] = useState(true);
 
     if (import.meta.env.DEV) {
-        console.log('API BASE URL:', import.meta.env.VITE_API_BASE_URL);
+        console.log('API BASE URL:', import.meta.env.VITE_API_URL);
     }
 
     useEffect(() => {
