@@ -120,7 +120,6 @@ router.patch(
             if (subjects !== undefined) {
                 updates.push(`subjects = $${paramIndex++}`);
                 values.push(subjects);
-                updates.push(`enrollment_status = 'pending'`);
             }
 
             if (grade !== undefined) {
@@ -139,7 +138,7 @@ router.patch(
                 UPDATE users 
                 SET ${updates.join(', ')}
                 WHERE id = $${paramIndex}
-                RETURNING id, email, first_name, last_name, role, grade, subjects, current_tier, enrollment_status, trial_premium, trial_end_date, welcome_premium, welcome_premium_end_date
+                RETURNING id, email, first_name, last_name, role, grade, subjects, current_tier, trial_premium, trial_end_date, welcome_premium, welcome_premium_end_date
             `;
 
             const result = await query(updateQuery, values);

@@ -44,7 +44,6 @@ export class AuthService {
                 currentTier: SubscriptionTier.STUDY_HELP, // Default tier
                 trialPremium: false,
                 welcomePremium: false,
-                enrollmentStatus: 'none',
                 createdAt: now,
                 updatedAt: now,
             };
@@ -53,9 +52,9 @@ export class AuthService {
             const sql = `
                 INSERT INTO users (
                     id, email, password_hash, first_name, last_name, role,
-                    grade, subjects, enrollment_status, current_tier, trial_premium, welcome_premium,
+                    grade, subjects, current_tier, trial_premium, welcome_premium,
                     created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                 RETURNING *
             `;
 
@@ -68,7 +67,6 @@ export class AuthService {
                 user.role,
                 user.grade,
                 user.subjects,
-                user.enrollmentStatus,
                 user.currentTier,
                 user.trialPremium,
                 user.welcomePremium,
@@ -197,7 +195,6 @@ export class AuthService {
             createdAt: new Date(dbUser.created_at),
             updatedAt: new Date(dbUser.updated_at),
             lastLoginAt: dbUser.last_login_at ? new Date(dbUser.last_login_at) : undefined,
-            enrollmentStatus: dbUser.enrollment_status,
         };
     }
 
@@ -242,7 +239,6 @@ export class AuthService {
             welcomePremiumEndDate: user.welcomePremiumEndDate?.toISOString(),
             grade: user.grade,
             subjects: user.subjects,
-            enrollmentStatus: user.enrollmentStatus,
         };
     }
 

@@ -28,7 +28,6 @@ export interface User {
     grade?: number; // For students
     subjects?: string[]; // For students/teachers
     childrenIds?: string[]; // For parents
-    enrollmentStatus?: 'none' | 'pending' | 'active' | 'rejected';
 
     // Subscription info
     subscriptionId?: string;
@@ -101,5 +100,4 @@ export interface UserResponse {
     welcomePremiumEndDate?: string;
     grade?: number;
     subjects?: string[];
-    enrollmentStatus?: string;
 }

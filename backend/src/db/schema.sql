@@ -11,7 +11,6 @@ create table if not exists public.users (
   role text check (role in ('student', 'parent', 'teacher', 'admin')),
   grade integer,
   subjects text[], -- Array of strings
-  enrollment_status text default 'none',
   children_ids text[], -- Array of user IDs (for parents)
   subscription_id uuid,
   current_tier text default 'study_help',

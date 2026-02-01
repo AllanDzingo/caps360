@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { contentApi, progressApi, Subject, ProgressMap, default as api } from '@/services/api';
 import { SubjectTile } from '../components/SubjectTile';
-import { Loader2, BookOpen, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, BookOpen, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
@@ -73,25 +73,7 @@ export const CoursesPage: React.FC = () => {
         );
     }
 
-    // Pending Enrollment State
-    if (user?.enrollmentStatus === 'pending') {
-        return (
-            <div className="container mx-auto px-4 py-12">
-                <Card className="max-w-2xl mx-auto p-8 text-center border-yellow-200 bg-yellow-50">
-                    <div className="flex justify-center mb-4">
-                        <AlertCircle className="w-12 h-12 text-yellow-500" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Enrollment Pending</h1>
-                    <p className="text-gray-600 mb-6">
-                        Your enrollment is pending approval. Courses will appear here once approved.
-                    </p>
-                    <Link to="/dashboard">
-                        <Button variant="outline">Return to Dashboard</Button>
-                    </Link>
-                </Card>
-            </div>
-        );
-    }
+
 
     // No Subjects State
     if (subjects.length === 0) {

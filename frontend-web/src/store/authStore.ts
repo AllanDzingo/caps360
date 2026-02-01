@@ -15,7 +15,6 @@ export interface User {
     welcomePremium: boolean;
     welcomePremiumEndDate?: string;
     subjects?: string[];
-    enrollmentStatus?: 'active' | 'pending' | 'rejected';
 }
 
 interface AuthState {
