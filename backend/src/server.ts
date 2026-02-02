@@ -111,13 +111,20 @@ app.use('/content', contentRoutes);
 
 app.use('/api/progress', progressRoutes);
 app.use('/progress', progressRoutes);
+
+// Direct subject routes (these are defined in contentRoutes but need to be mounted at root)
 app.get('/api/subjects', (req, res) => contentController.getSubjects(req, res));
+app.get('/api/subjects/:id', (req, res) => contentController.getSubject(req, res));
+app.get('/api/subjects/:id/topics', (req, res) => contentController.getSubjectTopics(req, res));
 app.get('/api/dashboard', (req, res) => contentController.getDashboard(req, res));
 app.get('/api/topics/:id', (req, res) => contentController.getTopic(req, res));
 
-// Production aliases
+// Production aliases (without /api prefix for frontend)
 app.get('/subjects', (req, res) => contentController.getSubjects(req, res));
+app.get('/subjects/:id', (req, res) => contentController.getSubject(req, res));
+app.get('/subjects/:id/topics', (req, res) => contentController.getSubjectTopics(req, res));
 app.get('/dashboard', (req, res) => contentController.getDashboard(req, res));
+app.get('/topics/:id', (req, res) => contentController.getTopic(req, res));
 import { authenticate, AuthRequest } from './middleware/auth.middleware';
 import authService from './services/auth.service';
 
