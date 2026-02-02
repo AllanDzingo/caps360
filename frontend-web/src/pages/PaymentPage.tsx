@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Check } from 'lucide-react';
-import api from '@/services/api';
 import { formatCurrency } from '@/lib/utils';
-import { PaystackButton } from 'react-paystack';
+import { PaystackButton } from '@/components/PaystackButton';
 
 interface PricingTier {
     name: string;
@@ -58,56 +57,14 @@ const tiers: PricingTier[] = [
     },
 ];
 
-const PAYSTACK_PUBLIC_KEY: string = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '';
-
-// Runtime guard and logging for Paystack config
-if (!PAYSTACK_PUBLIC_KEY) {
-    // eslint-disable-next-line no-console
-    console.error('[Paystack] VITE_PAYSTACK_PUBLIC_KEY is missing or undefined! Payment will not work.');
-} else {
-    // eslint-disable-next-line no-console
-    console.log(`[Paystack] Public key loaded: ****${PAYSTACK_PUBLIC_KEY.slice(-4)}`);
-}
-
 export const PaymentPage: React.FC = () => {
     const navigate = useNavigate();
-    const { user, updateUser } = useAuthStore();
-    const [processing, setProcessing] = useState(false);
+    const { user } = useAuthStore();
 
     if (!user) {
         navigate('/login');
         return null;
     }
-
-    const handlePaystackSuccess = async (reference: any, tier: string) => {
-        setProcessing(true);
-        try {
-            // Call backend to verify payment and update subscription
-            const response = await api.post('/subscriptions/paid/start', {
-                tier,
-                paystackSubscriptionId: reference.reference,
-                paystackCustomerCode: reference.trans,
-            });
-
-            if (response.status === 200 || response.status === 201) {
-                // Update local user state
-                updateUser({ currentTier: tier });
-                // Redirect to subject selection
-                navigate('/select-subjects');
-            } else {
-                alert('Payment verification failed. Please contact support.');
-            }
-        } catch (error) {
-            console.error('Payment verification error:', error);
-            alert('An error occurred. Please contact support.');
-        } finally {
-            setProcessing(false);
-        }
-    };
-
-    const handlePaystackClose = () => {
-        console.log('Payment closed');
-    };
 
     return (
         <div className="container mx-auto px-4 py-12">
@@ -122,35 +79,6 @@ export const PaymentPage: React.FC = () => {
 
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {tiers.map((tier) => {
-                    // Validate required Paystack config values
-                    const reference = new Date().getTime().toString();
-                    const email = user.email;
-                    const amount = Number(tier.price) * 100;
-                    const publicKey = PAYSTACK_PUBLIC_KEY;
-                    const canRenderPaystack =
-                        !!publicKey && !!email && !!reference && amount > 0 && !isNaN(amount);
-
-                    const config = {
-                        reference,
-                        email,
-                        amount,
-                        publicKey,
-                        metadata: {
-                            custom_fields: [
-                                {
-                                    display_name: 'User ID',
-                                    variable_name: 'user_id',
-                                    value: user.id,
-                                },
-                                {
-                                    display_name: 'Tier',
-                                    variable_name: 'tier',
-                                    value: tier.tier,
-                                },
-                            ],
-                        },
-                    };
-
                     return (
                         <Card
                             key={tier.name}
@@ -183,26 +111,13 @@ export const PaymentPage: React.FC = () => {
                                     ))}
                                 </ul>
 
-                                {canRenderPaystack ? (
-                                    <PaystackButton
-                                        {...config}
-                                        text={processing ? 'Processing...' : 'Subscribe Now'}
-                                        onSuccess={(reference) => handlePaystackSuccess(reference, tier.tier)}
-                                        onClose={handlePaystackClose}
-                                        className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${tier.highlighted
-                                            ? 'bg-brand-blue text-white hover:bg-blue-700'
-                                            : 'bg-gray-900 text-white hover:bg-gray-800'
-                                            } ${processing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    />
-                                ) : (
-                                    <Button
-                                        variant={tier.highlighted ? 'premium' : 'primary'}
-                                        className="w-full"
-                                        onClick={() => alert('Payment gateway not configured or missing required info. Please contact administrator.')}
-                                    >
-                                        Subscribe Now
-                                    </Button>
-                                )}
+                                <PaystackButton
+                                    tier={tier.tier}
+                                    className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${tier.highlighted
+                                        ? 'bg-brand-blue text-white hover:bg-blue-700'
+                                        : 'bg-gray-900 text-white hover:bg-gray-800'
+                                        }`}
+                                />
                             </CardContent>
                         </Card>
                     );

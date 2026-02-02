@@ -33,6 +33,9 @@ import { AIChatPage } from './pages/AIChatPage';
 import { CoursesPage } from './pages/CoursesPage';
 // ... previous imports
 
+// ... previous imports
+import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
+
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isAuthenticated } = useAuthStore();
@@ -54,6 +57,14 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <PaymentPage />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/payment/success"
+                            element={
+                                <ProtectedRoute>
+                                    <PaymentSuccessPage />
                                 </ProtectedRoute>
                             }
                         />
