@@ -81,6 +81,64 @@ export class PaymentService {
     }
 
     /**
+     * Paystack: Initialize payment transaction
+     */
+    async initializePaystackPayment(
+        email: string,
+        amount: number,
+        userId: string,
+        tier: string
+    ): Promise<{ authorization_url: string; access_code: string; reference: string }> {
+        try {
+            const response = await axios.post(
+                'https://api.paystack.co/transaction/initialize',
+                {
+                    email,
+                    amount, // Amount in kobo (already converted by frontend)
+                    currency: 'ZAR',
+                    metadata: {
+                        user_id: userId,
+                        tier,
+                        custom_fields: [
+                            {
+                                display_name: 'User ID',
+                                variable_name: 'user_id',
+                                value: userId,
+                            },
+                            {
+                                display_name: 'Subscription Tier',
+                                variable_name: 'tier',
+                                value: tier,
+                            },
+                        ],
+                    },
+                    callback_url: 'https://caps360.co.za/payment/success',
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${config.paystack.secretKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (response.data.status) {
+                logger.info(`Paystack payment initialized: ${response.data.data.reference}`);
+                return {
+                    authorization_url: response.data.data.authorization_url,
+                    access_code: response.data.data.access_code,
+                    reference: response.data.data.reference,
+                };
+            }
+
+            throw new Error('Failed to initialize Paystack payment');
+        } catch (error) {
+            logger.error('Paystack payment initialization error:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Paystack: Create subscription
      */
     async createPaystackSubscription(
