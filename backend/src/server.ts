@@ -62,8 +62,26 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing (exclude webhooks to allow raw body access for signature verification)
+const shouldParseBody = (req: Request) => {
+    return !req.path.includes('/paystack/webhook') && !req.path.includes('/webhooks');
+};
+
+app.use((req, res, next) => {
+    if (shouldParseBody(req)) {
+        express.json({ limit: '10mb' })(req, res, next);
+    } else {
+        next();
+    }
+});
+
+app.use((req, res, next) => {
+    if (shouldParseBody(req)) {
+        express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+    } else {
+        next();
+    }
+});
 
 // Compression
 app.use(compression());

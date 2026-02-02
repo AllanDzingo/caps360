@@ -26,5 +26,5 @@ create table if not exists study_interactions (
   user_id uuid references auth.users(id) on delete cascade,
   prompt text,
   ai_response text,
-  created_at timestamptz default now()
+  created_at timestamptz default now( )
 );
