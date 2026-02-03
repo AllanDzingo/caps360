@@ -274,7 +274,7 @@ export class SubscriptionService {
     /**
      * Get tier price in cents
      */
-    private getTierPrice(tier: SubscriptionTier): number {
+    public getTierPrice(tier: SubscriptionTier): number {
         switch (tier) {
             case SubscriptionTier.STUDY_HELP:
                 return config.subscriptions.studyHelpPrice;

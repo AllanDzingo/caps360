@@ -186,6 +186,8 @@ router.post(
 /**
  * GET /api/payments/paystack/verify/:reference
  * Verify a Paystack transaction
+ * NOTE: This endpoint is for UI feedback ONLY. 
+ * Security critical access unlocking happens ONLY via the secured webhook.
  */
 router.get('/paystack/verify/:reference', authenticate, async (req: AuthRequest, res: Response) => {
     try {

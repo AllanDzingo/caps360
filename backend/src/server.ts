@@ -120,6 +120,8 @@ app.use('/subscriptions', subscriptionRoutes);
 
 app.use('/api/payments', paymentRoutes);
 app.use('/payments', paymentRoutes);
+// Alias to support Paystack Dashboard URL structure (/api/paystack/webhook)
+app.use('/api', paymentRoutes);
 
 app.use('/api/ai', aiRoutes);
 app.use('/ai', aiRoutes);
