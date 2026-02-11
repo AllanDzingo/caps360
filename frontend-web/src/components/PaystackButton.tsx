@@ -27,8 +27,14 @@ export const PaystackButton: React.FC<PaystackButtonProps> = ({
             try {
                 if (!user?.email) return;
 
+                const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+
+                // Runtime guard
+                if (!publicKey) {
+                    throw new Error("[Paystack] VITE_PAYSTACK_PUBLIC_KEY is missing or undefined. Please ensure it is set in your environment variables at build time.");
+                }
+
                 // Call backend to initialize transaction and get access code
-                // This ensures the amount is set securely by the backend based on the tier
                 const { data } = await api.post('/payments/paystack/initialize', {
                     tier,
                     email: user.email
@@ -38,13 +44,13 @@ export const PaystackButton: React.FC<PaystackButtonProps> = ({
                     setConfig({
                         reference: data.reference,
                         email: user.email,
-                        publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
+                        publicKey: publicKey,
                         accessCode: data.access_code,
-                        amount: data.amount, // Optional with access_code but good for reference
+                        amount: data.amount,
                     });
                 }
-            } catch (error) {
-                console.error('Failed to initialize Paystack transaction:', error);
+            } catch (error: any) {
+                console.error('Failed to initialize Paystack transaction:', error.message || error);
             } finally {
                 setInitializing(false);
             }
@@ -53,15 +59,14 @@ export const PaystackButton: React.FC<PaystackButtonProps> = ({
         initPayment();
     }, [tier, user?.email]);
 
-    // Hook must be called unconditionally, but we can't pass null config usually.
-    // However, we only trigger it when config is ready.
-    // NOTE: usePaystackPayment might complain if config is empty.
-    // construct a dummy config if null to satisfy types/hook, but prevent checking.
+    // Hook must be called unconditionally
+    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+
     const paystackConfig = config || {
         reference: new Date().getTime().toString(),
         email: "placeholder@example.com",
         amount: 0,
-        publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_placeholder",
+        publicKey: publicKey, // Use the same key from import.meta.env
     };
 
     const initializePaystack = usePaystackPayment(paystackConfig);

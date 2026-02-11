@@ -9,6 +9,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 ### 1. Deployment Scripts
 
 #### `scripts/deploy-to-azure.ps1` (Windows/PowerShell)
+
 - **Purpose**: Automated deployment script for Windows users
 - **Features**:
   - One-command deployment to Azure
@@ -19,14 +20,17 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
   - Database configuration support
   - Environment-specific settings (dev/staging/prod)
 - **Usage**:
+
   ```powershell
   .\deploy-to-azure.ps1 -Environment prod -ResourceGroup caps360-prod
   ```
 
 #### `scripts/deploy-to-azure.sh` (Bash/Linux/macOS)
+
 - **Purpose**: Automated deployment script for Unix-based systems
 - **Features**: Same as PowerShell version but using Bash
 - **Usage**:
+
   ```bash
   ./deploy-to-azure.sh --environment prod --resource-group caps360-prod
   ```
@@ -34,6 +38,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 ### 2. Documentation
 
 #### `docs/azure-deployment-guide.md`
+
 - **Comprehensive guide** covering:
   - Prerequisites and setup
   - Quick start instructions
@@ -47,6 +52,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
   - Cost optimization
 
 #### `docs/deployment-checklist.md`
+
 - **Pre-deployment checklist** with items for:
   - Azure account setup
   - Environment configuration
@@ -60,6 +66,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
   - Sign-off and rollback plan
 
 #### `docs/azure-quick-reference.md`
+
 - **Quick reference guide** with:
   - Quick start (< 5 minutes)
   - Common Azure commands
@@ -73,6 +80,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 ### 3. Configuration Files
 
 #### `frontend-web/staticwebapp.config.json`
+
 - **Static Web Apps configuration** with:
   - API routing rules
   - SPA fallback routing
@@ -84,6 +92,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 ### 4. CI/CD Pipeline
 
 #### `.github/workflows/deploy-azure.yml`
+
 - **Automated GitHub Actions workflow** that:
   - Triggers on push to main/develop
   - Supports manual workflow dispatch
@@ -96,18 +105,21 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 ## Key Features
 
 ### 1. **Automated Deployment**
+
 - Single command deployment
 - Automatic resource creation
 - Environment-specific configuration
 - Zero-downtime deployments
 
 ### 2. **Environment Support**
+
 - Development (dev)
 - Staging (staging)
 - Production (prod)
 - Separate configurations and resources for each
 
 ### 3. **Complete Infrastructure**
+
 - App Service Plan (Backend)
 - Web App (Backend API)
 - Static Web Apps (Frontend)
@@ -116,6 +128,7 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 - Key Vault ready
 
 ### 4. **Security**
+
 - Security headers configured
 - CORS support
 - HTTPS enforcement
@@ -123,12 +136,14 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 - Key Vault integration ready
 
 ### 5. **Monitoring**
+
 - Application Insights integration
 - Health check endpoints
 - Logging configuration
 - Performance metrics
 
 ### 6. **CI/CD Integration**
+
 - GitHub Actions workflow included
 - Automated testing on push
 - Automatic deployment to target environment
@@ -137,12 +152,14 @@ Complete Azure deployment solution for CAPS360 with automated scripts, comprehen
 ## Quick Start
 
 ### 1. Prerequisites
+
 ```bash
 # Install Azure CLI
 az login  # Login to your Azure account
 ```
 
 ### 2. Prepare Environment
+
 ```bash
 # Create .env files with your configuration
 cp .env.example .env.prod
@@ -150,19 +167,23 @@ cp .env.example .env.prod
 ```
 
 ### 3. Deploy
+
 **Windows:**
+
 ```powershell
 cd scripts
 .\deploy-to-azure.ps1 -Environment prod -ResourceGroup caps360-prod
 ```
 
 **Linux/macOS:**
+
 ```bash
 cd scripts
 ./deploy-to-azure.sh --environment prod --resource-group caps360-prod
 ```
 
 ### 4. Verify
+
 ```bash
 # Backend
 curl https://caps360-backend-prod.azurewebsites.net/health
@@ -174,6 +195,7 @@ curl https://caps360-web-prod.azurestaticapps.net/
 ## Script Parameters
 
 ### PowerShell: `deploy-to-azure.ps1`
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | Environment | string | Yes | dev, staging, or prod |
@@ -185,6 +207,7 @@ curl https://caps360-web-prod.azurestaticapps.net/
 | SkipBackend | bool | No | Skip backend deployment |
 
 ### Bash: `deploy-to-azure.sh`
+
 | Flag | Type | Required | Description |
 |------|------|----------|-------------|
 | --environment, -e | string | Yes | dev, staging, or prod |
@@ -198,9 +221,11 @@ curl https://caps360-web-prod.azurestaticapps.net/
 ## Deployment Stages
 
 ### Stage 1: Resource Group
+
 - Creates or verifies Azure resource group
 
 ### Stage 2: Backend Deployment
+
 - Creates App Service Plan
 - Creates Web App (Node.js)
 - Configures environment variables
@@ -209,16 +234,19 @@ curl https://caps360-web-prod.azurestaticapps.net/
 - Verifies deployment with health check
 
 ### Stage 3: Frontend Deployment
+
 - Creates Static Web App
 - Builds frontend (npm run build)
 - Deploys to Static Web Apps
 - Verifies accessibility
 
 ### Stage 4: Database (Optional)
+
 - Verifies PostgreSQL configuration
 - Applies schema migrations
 
 ### Stage 5: Monitoring
+
 - Creates Application Insights instance
 - Links to backend application
 - Configures monitoring
@@ -226,6 +254,7 @@ curl https://caps360-web-prod.azurestaticapps.net/
 ## Environment Variables
 
 ### Backend (Required)
+
 ```
 NODE_ENV=production
 JWT_SECRET=<generated-secret>
@@ -237,14 +266,18 @@ PAYSTACK_SECRET_KEY=<your-key>
 ```
 
 ### Frontend (Required)
+
 ```
 VITE_API_URL=https://caps360-backend-prod.azurewebsites.net
-VITE_PAYSTACK_PUBLIC_KEY=<your-key>
+VITE_PAYSTACK_PUBLIC_KEY=pk_live_xxx
 ```
+
+**CRITICAL**: `VITE_PAYSTACK_PUBLIC_KEY` must be provided at **Build Time**. For Azure Static Web Apps, ensure this is set in your GitHub Actions/Azure Pipeline secrets so it can be injected during the `npm run build` process. It CANNOT be changed at runtime via Azure App Settings once the site is built.
 
 ## Post-Deployment
 
 ### Next Steps
+
 1. Verify health endpoints responding
 2. Test functionality end-to-end
 3. Configure custom domain (if applicable)
@@ -253,6 +286,7 @@ VITE_PAYSTACK_PUBLIC_KEY=<your-key>
 6. Configure backup schedule
 
 ### Useful Commands
+
 ```bash
 # View logs
 az webapp log tail --resource-group caps360-prod --name caps360-backend-prod
@@ -273,6 +307,7 @@ az webapp config appsettings set --resource-group caps360-prod \
 See `docs/azure-quick-reference.md` for troubleshooting procedures.
 
 Common issues:
+
 - Backend not starting → Check logs and environment variables
 - Frontend not loading → Verify build and Static Web App configuration
 - Database connection fails → Check firewall rules and credentials
@@ -281,12 +316,14 @@ Common issues:
 ## Cost Estimates
 
 ### Development Environment
+
 - App Service Plan (B1): ~$10/month
 - Static Web App (Free): $0/month
 - Application Insights: Pay-as-you-go (~$5-20/month)
 - **Total**: ~$15-30/month
 
 ### Production Environment
+
 - App Service Plan (S1): ~$70/month
 - Static Web App (Standard): ~$9/month
 - PostgreSQL (B_Gen5_2): ~$80-150/month
