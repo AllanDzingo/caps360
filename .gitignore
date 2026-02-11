@@ -44,3 +44,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 backend/create-admin-temp.ts
+backend/.env
+backend/env_temp.txt
+env_dump.txt
+scripts/set-backend-secrets.ps1
