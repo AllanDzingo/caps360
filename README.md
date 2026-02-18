@@ -47,8 +47,7 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 ### Backend
 
 - **Runtime:** Node.js + Express + TypeScript
-- **Database:** Supabase (PostgreSQL)
-- **Storage:** Supabase Storage
+- **Payments**: Paystack (ZAR)
 - **Hosting:** Fly.io (or generic Docker hosting)
 - **AI:** Google Gemini (via API)
 

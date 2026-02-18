@@ -24,7 +24,6 @@ graph TB
     
     subgraph "External Services"
         GEMINI[Google Gemini AI]
-        PAYFAST[PayFast]
         PAYSTACK[Paystack]
     end
     
@@ -93,7 +92,6 @@ graph TB
 
 **Payment Service**
 
-- PayFast integration for trial payment capture
 - Paystack integration for recurring subscriptions
 - Webhook signature verification
 - Payment record tracking
@@ -141,7 +139,7 @@ graph TB
 
 **Webhooks**
 
-- PayFast and Paystack webhooks processed directly by the API server
+- Paystack webhooks processed directly by the API server
 
 **Notification Service**
 
@@ -177,13 +175,6 @@ function getEffectiveTier(user: User): Tier {
 ```
 
 ## Payment Integration
-
-### PayFast (Trial Payment Capture)
-
-- Used for deferred trial payments
-- ITN (Instant Transaction Notification) webhook
-- MD5 signature verification
-- One-time payment processing
 
 ### Paystack (Recurring Subscriptions)
 

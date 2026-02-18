@@ -37,12 +37,6 @@ export const config = {
         ssl: process.env.DB_SSL ? process.env.DB_SSL === 'true' : nodeEnv === 'production',
     },
 
-    payfast: {
-        merchantId: process.env.PAYFAST_MERCHANT_ID || '',
-        merchantKey: process.env.PAYFAST_MERCHANT_KEY || '',
-        passphrase: process.env.PAYFAST_PASSPHRASE || '',
-        sandbox: process.env.PAYFAST_SANDBOX === 'true',
-    },
 
     paystack: {
         secretKey: process.env.PAYSTACK_SECRET_KEY || '',

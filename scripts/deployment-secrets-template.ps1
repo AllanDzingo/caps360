@@ -38,10 +38,6 @@ $DB_NAME = "caps360"
 $PAYSTACK_SECRET_KEY = ""  # Get from: https://dashboard.paystack.com
 $PAYSTACK_PUBLIC_KEY = ""
 
-# PayFast - For one-time payments
-$PAYFAST_MERCHANT_ID = ""  # Get from: https://www.payfast.co.za
-$PAYFAST_MERCHANT_KEY = ""
-$PAYFAST_PASSPHRASE = ""  # Optional, set in PayFast dashboard
 
 # ===================================
 # AUTHENTICATION (Optional - Supabase)
@@ -74,9 +70,6 @@ $COMMUNICATION_SERVICES_CONNECTION_STRING = ""
   -GeminiApiKey $GEMINI_API_KEY `
   -OpenAIApiKey $OPENAI_API_KEY `
   -PaystackSecretKey $PAYSTACK_SECRET_KEY `
-  -PayfastMerchantId $PAYFAST_MERCHANT_ID `
-  -PayfastMerchantKey $PAYFAST_MERCHANT_KEY `
-  -PayfastPassphrase $PAYFAST_PASSPHRASE `
   -SupabaseUrl $SUPABASE_URL `
   -SupabaseAnonKey $SUPABASE_ANON_KEY `
   -SupabaseServiceRoleKey $SUPABASE_SERVICE_ROLE_KEY `
@@ -94,7 +87,6 @@ $COMMUNICATION_SERVICES_CONNECTION_STRING = ""
 
 # 3. Payment providers are optional:
 #    - Paystack: For recurring monthly/annual subscriptions
-#    - PayFast: For one-time trial payments
 
 # 4. Supabase is optional (legacy auth system)
 

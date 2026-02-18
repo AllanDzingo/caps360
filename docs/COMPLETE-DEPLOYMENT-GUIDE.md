@@ -5,11 +5,12 @@
 This comprehensive guide will help you deploy the CAPS360 educational platform to Azure with all components working together seamlessly.
 
 **What gets deployed:**
+
 - ✅ Azure PostgreSQL Database with all tables
 - ✅ Backend API (Node.js/Express) on Azure App Service
 - ✅ Frontend (React/Vite) on Azure Static Web Apps
 - ✅ Azure Functions for serverless tasks (emails, notifications)
-- ✅ Payment integrations (Paystack & PayFast)
+- ✅ Payment integration (Paystack)
 - ✅ AI Chat service (OpenAI/Gemini)
 - ✅ Authentication system
 - ✅ Application Insights monitoring
@@ -21,6 +22,7 @@ This comprehensive guide will help you deploy the CAPS360 educational platform t
 ### Required Tools
 
 1. **Azure CLI** (latest version)
+
    ```powershell
    # Install on Windows
    winget install Microsoft.AzureCLI
@@ -30,6 +32,7 @@ This comprehensive guide will help you deploy the CAPS360 educational platform t
    ```
 
 2. **Node.js 20+** and **npm**
+
    ```powershell
    # Download from: https://nodejs.org/
    node --version  # Should be 20.x or higher
@@ -37,12 +40,14 @@ This comprehensive guide will help you deploy the CAPS360 educational platform t
    ```
 
 3. **PostgreSQL Client (psql)**
+
    ```powershell
    # Download from: https://www.postgresql.org/download/
    psql --version
    ```
 
 4. **Git** (for version control)
+
    ```powershell
    git --version
    ```
@@ -50,7 +55,7 @@ This comprehensive guide will help you deploy the CAPS360 educational platform t
 ### Azure Account Setup
 
 1. **Active Azure Subscription**
-   - Sign up at https://azure.microsoft.com/free/
+   - Sign up at <https://azure.microsoft.com/free/>
    - Note your subscription ID
 
 2. **Sufficient Permissions**
@@ -58,6 +63,7 @@ This comprehensive guide will help you deploy the CAPS360 educational platform t
    - Ability to create resources
 
 3. **Login to Azure**
+
    ```powershell
    az login
    # Select your subscription
@@ -72,13 +78,12 @@ Gather these before starting deployment:
 |---------|----------|---------|
 | JWT_SECRET | ✅ Yes | Authentication token encryption |
 | GEMINI_API_KEY or OPENAI_API_KEY | ✅ Yes | AI chat functionality |
-| PAYSTACK_SECRET_KEY | Optional | Recurring subscriptions |
-| PAYFAST_MERCHANT_ID | Optional | One-time payments |
-| PAYFAST_MERCHANT_KEY | Optional | One-time payments |
+| PAYSTACK_SECRET_KEY | Optional | Subscriptions |
 | SUPABASE_URL | Optional | Legacy auth (being phased out) |
 | SUPABASE_ANON_KEY | Optional | Legacy auth |
 
 **Generate JWT Secret:**
+
 ```powershell
 # Generate a secure 64-character secret
 -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 64 | ForEach-Object { [char]$_ })
@@ -100,20 +105,20 @@ cd scripts
   -ResourceGroup caps360-prod `
   -JwtSecret "your-64-char-secret" `
   -GeminiApiKey "your-gemini-key" `
-  -PaystackSecretKey "your-paystack-key" `
-  -PayfastMerchantId "your-payfast-id" `
-  -PayfastMerchantKey "your-payfast-key"
+  -PaystackSecretKey "your-paystack-key"
 ```
 
 **Parameters:**
+
 - `Environment`: dev, staging, or prod
 - `ResourceGroup`: Azure resource group name (will be created if doesn't exist)
 - `Location`: Azure region (default: southafricanorth)
 - `JwtSecret`: **Required** - Your JWT secret
 - `GeminiApiKey` or `OpenAIApiKey`: **Required** - AI service key
-- Other parameters: See script for full list
+- Other parameters: See script for full list (e.g., `PaystackSecretKey`)
 
 The master script will:
+
 1. ✅ Deploy PostgreSQL database
 2. ✅ Create all database tables
 3. ✅ Deploy backend API
@@ -144,6 +149,7 @@ cd scripts
 ```
 
 **What happens:**
+
 - ✅ Creates Azure PostgreSQL Flexible Server
 - ✅ Configures firewall rules
 - ✅ Creates `caps360` database
@@ -152,17 +158,20 @@ cd scripts
 - ✅ Verifies connectivity
 
 **Save the output!** You'll need:
+
 - Database connection string (DATABASE_URL)
 - Admin username
 - Admin password
 
 **Example output:**
+
 ```
 Connection String (save this for backend deployment):
 postgresql://caps360admin:SecurePassword123@caps360-db-prod.postgres.database.azure.com:5432/caps360?sslmode=require
 ```
 
 **Manual verification:**
+
 ```powershell
 # Test connection
 $env:PGPASSWORD = "your-db-password"
@@ -182,12 +191,11 @@ psql -h caps360-db-prod.postgres.database.azure.com -U caps360admin -d caps360 -
   -DatabaseConnectionString "postgresql://..." `
   -JwtSecret "your-jwt-secret" `
   -GeminiApiKey "your-gemini-key" `
-  -PaystackSecretKey "your-paystack-key" `
-  -PayfastMerchantId "your-payfast-id" `
-  -PayfastMerchantKey "your-payfast-key"
+  -PaystackSecretKey "your-paystack-key"
 ```
 
 **What happens:**
+
 - ✅ Builds backend code
 - ✅ Creates App Service Plan
 - ✅ Creates Web App
@@ -199,6 +207,7 @@ psql -h caps360-db-prod.postgres.database.azure.com -U caps360admin -d caps360 -
 **Backend URL:** `https://caps360-backend-prod.azurewebsites.net`
 
 **Verify deployment:**
+
 ```powershell
 # Test health endpoint
 curl https://caps360-backend-prod.azurewebsites.net/health
@@ -208,6 +217,7 @@ curl https://caps360-backend-prod.azurewebsites.net/health
 ```
 
 **View logs:**
+
 ```powershell
 az webapp log tail `
   --name caps360-backend-prod `
@@ -230,6 +240,7 @@ az webapp log tail `
 ```
 
 **What happens:**
+
 - ✅ Creates environment configuration
 - ✅ Builds frontend bundle
 - ✅ Creates Static Web App
@@ -240,6 +251,7 @@ az webapp log tail `
 **Frontend URL:** `https://caps360-web-prod.azurestaticapps.net`
 
 **Verify deployment:**
+
 ```powershell
 # Test frontend
 curl https://caps360-web-prod.azurestaticapps.net
@@ -264,6 +276,7 @@ Start-Process "https://caps360-web-prod.azurestaticapps.net"
 ```
 
 **What happens:**
+
 - ✅ Builds function code
 - ✅ Creates Storage Account
 - ✅ Creates Function App
@@ -272,12 +285,14 @@ Start-Process "https://caps360-web-prod.azurestaticapps.net"
 - ✅ Links Application Insights
 
 **Functions deployed:**
+
 - `welcomeEmail` - Send welcome emails to new users
 - `weeklySummary` - Send weekly progress summaries
 - `inactivityReminder` - Send reminders to inactive users
 - `forgotPassword` - Handle password reset emails
 
 **View function logs:**
+
 ```powershell
 az functionapp log tail `
   --name caps360-functions-prod `
@@ -288,20 +303,18 @@ az functionapp log tail `
 
 ### Step 5: Payment Configuration
 
-**Configure Paystack and PayFast webhooks:**
+**Configure Paystack webhooks:**
 
 ```powershell
 .\configure-payments.ps1 `
   -Environment prod `
   -ResourceGroup caps360-prod `
   -BackendUrl "https://caps360-backend-prod.azurewebsites.net" `
-  -PaystackSecretKey "your-paystack-key" `
-  -PayfastMerchantId "your-payfast-id" `
-  -PayfastMerchantKey "your-payfast-key" `
-  -PayfastPassphrase "your-payfast-passphrase"
+  -PaystackSecretKey "your-paystack-key"
 ```
 
 **What happens:**
+
 - ✅ Validates webhook endpoints
 - ✅ Tests payment endpoints
 - ✅ Updates backend settings
@@ -310,7 +323,8 @@ az functionapp log tail `
 **Manual webhook configuration:**
 
 **Paystack:**
-1. Login to https://dashboard.paystack.com
+
+1. Login to <https://dashboard.paystack.com>
 2. Navigate to Settings > Webhooks
 3. Add webhook URL: `https://caps360-backend-prod.azurewebsites.net/api/payments/paystack/webhook`
 4. Select events:
@@ -318,12 +332,6 @@ az functionapp log tail `
    - subscription.disable
    - charge.success
    - invoice.payment_failed
-
-**PayFast:**
-1. Login to https://www.payfast.co.za
-2. Navigate to Settings > Integration
-3. Set ITN URL: `https://caps360-backend-prod.azurewebsites.net/api/payments/payfast/webhook`
-4. Enable ITN for payment events
 
 ---
 
@@ -340,6 +348,7 @@ az functionapp log tail `
 ```
 
 **Tests performed:**
+
 1. ✅ Backend health check
 2. ✅ Frontend accessibility
 3. ✅ CORS configuration
@@ -357,6 +366,7 @@ az functionapp log tail `
 15. ✅ Security headers
 
 **Expected output:**
+
 ```
 ========================================
            TEST RESULTS SUMMARY
@@ -379,6 +389,7 @@ Success Rate:  100%
 ### 1. Test User Flows
 
 **Registration:**
+
 ```powershell
 # Test user registration
 $body = @{
@@ -398,6 +409,7 @@ Invoke-RestMethod `
 ```
 
 **Login:**
+
 ```powershell
 # Test login
 $body = @{
@@ -416,6 +428,7 @@ $token = $response.token
 ```
 
 **AI Chat:**
+
 ```powershell
 # Test AI chat
 $headers = @{ Authorization = "Bearer $token" }
@@ -437,6 +450,7 @@ Invoke-RestMethod `
 ### 2. Monitor Application Health
 
 **Application Insights:**
+
 ```powershell
 # Get insights resource
 az monitor app-insights component show `
@@ -445,6 +459,7 @@ az monitor app-insights component show `
 ```
 
 **View metrics in Azure Portal:**
+
 1. Navigate to Application Insights resource
 2. Check:
    - Request rates
@@ -454,6 +469,7 @@ az monitor app-insights component show `
    - Exceptions
 
 **Set up alerts:**
+
 ```powershell
 # Create alert for high error rate
 az monitor metrics alert create `
@@ -470,6 +486,7 @@ az monitor metrics alert create `
 ### 3. Database Verification
 
 **Check tables:**
+
 ```powershell
 $env:PGPASSWORD = "your-db-password"
 psql -h caps360-db-prod.postgres.database.azure.com -U caps360admin -d caps360
@@ -488,6 +505,7 @@ SELECT COUNT(*) FROM subscriptions;
 ```
 
 **Database backups:**
+
 ```powershell
 # Enable automated backups (7 day retention)
 az postgres flexible-server update `
@@ -505,7 +523,9 @@ az postgres flexible-server update `
 **Problem:** Backend cannot connect to database
 
 **Solution:**
+
 1. Check firewall rules:
+
    ```powershell
    az postgres flexible-server firewall-rule list `
      --resource-group caps360-prod `
@@ -513,6 +533,7 @@ az postgres flexible-server update `
    ```
 
 2. Add your IP if needed:
+
    ```powershell
    az postgres flexible-server firewall-rule create `
      --resource-group caps360-prod `
@@ -523,6 +544,7 @@ az postgres flexible-server update `
    ```
 
 3. Verify connection string in backend settings:
+
    ```powershell
    az webapp config appsettings list `
      --name caps360-backend-prod `
@@ -537,7 +559,9 @@ az postgres flexible-server update `
 **Problem:** Backend shows unhealthy status
 
 **Solution:**
+
 1. Check logs:
+
    ```powershell
    az webapp log tail `
      --name caps360-backend-prod `
@@ -545,6 +569,7 @@ az postgres flexible-server update `
    ```
 
 2. Verify environment variables:
+
    ```powershell
    az webapp config appsettings list `
      --name caps360-backend-prod `
@@ -552,6 +577,7 @@ az postgres flexible-server update `
    ```
 
 3. Restart app:
+
    ```powershell
    az webapp restart `
      --name caps360-backend-prod `
@@ -565,6 +591,7 @@ az postgres flexible-server update `
 **Problem:** Frontend shows blank page or errors
 
 **Solution:**
+
 1. Check browser console for errors
 2. Verify environment variables were injected:
    - Visit `https://caps360-web-prod.azurestaticapps.net/env.js`
@@ -578,7 +605,9 @@ az postgres flexible-server update `
 **Problem:** Payments succeed but not recorded in database
 
 **Solution:**
+
 1. Test webhook endpoint:
+
    ```powershell
    Invoke-RestMethod `
      -Uri "https://caps360-backend-prod.azurewebsites.net/api/payments/paystack/webhook" `
@@ -598,7 +627,9 @@ az postgres flexible-server update `
 **Problem:** AI chat returns errors
 
 **Solution:**
+
 1. Verify API key is configured:
+
    ```powershell
    az webapp config appsettings list `
      --name caps360-backend-prod `
@@ -608,6 +639,7 @@ az postgres flexible-server update `
 
 2. Check API quota/limits in AI provider dashboard
 3. Test AI endpoint directly:
+
    ```powershell
    $headers = @{ Authorization = "Bearer <token>" }
    Invoke-RestMethod `
@@ -625,6 +657,7 @@ az postgres flexible-server update `
 ### 1. Rotate Secrets Regularly
 
 **JWT Secret:**
+
 ```powershell
 # Generate new secret
 $newSecret = -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 64 | ForEach-Object { [char]$_ })
@@ -649,6 +682,7 @@ az postgres flexible-server update `
 ### 3. Configure SSL/TLS
 
 **Custom domain with SSL:**
+
 ```powershell
 # Add custom domain to frontend
 az staticwebapp hostname set `
@@ -750,18 +784,21 @@ swa deploy ./dist-backup `
 ## 📞 Support & Resources
 
 ### Azure Resources
+
 - [Azure Portal](https://portal.azure.com)
 - [Azure CLI Documentation](https://docs.microsoft.com/cli/azure/)
 - [Azure App Service Docs](https://docs.microsoft.com/azure/app-service/)
 - [Azure Functions Docs](https://docs.microsoft.com/azure/azure-functions/)
 
 ### CAPS360 Documentation
+
 - [Backend API Documentation](../backend/README.md)
 - [Frontend Documentation](../frontend-web/README.md)
 - [Database Schema](../backend/src/db/schema.sql)
 - [Payment Flows](./payment-flows.md)
 
 ### Getting Help
+
 - Check logs in Application Insights
 - Review error messages carefully
 - Test each component individually
@@ -774,6 +811,7 @@ swa deploy ./dist-backup `
 Print this checklist and check off each item:
 
 ### Pre-Deployment
+
 - [ ] Azure CLI installed and authenticated
 - [ ] Node.js 20+ and npm installed
 - [ ] PostgreSQL client (psql) installed
@@ -782,6 +820,7 @@ Print this checklist and check off each item:
 - [ ] Resource group name decided
 
 ### Database
+
 - [ ] Database deployed successfully
 - [ ] All tables created (15+ tables)
 - [ ] Admin user created
@@ -789,6 +828,7 @@ Print this checklist and check off each item:
 - [ ] Database accessible from your IP
 
 ### Backend
+
 - [ ] Backend built without errors
 - [ ] App Service created
 - [ ] Environment variables configured
@@ -797,6 +837,7 @@ Print this checklist and check off each item:
 - [ ] CORS configured
 
 ### Frontend
+
 - [ ] Frontend built successfully
 - [ ] Static Web App created
 - [ ] Environment variables injected
@@ -805,6 +846,7 @@ Print this checklist and check off each item:
 - [ ] Backend API connectivity verified
 
 ### Azure Functions
+
 - [ ] Functions built successfully
 - [ ] Function App created
 - [ ] All functions deployed
@@ -812,12 +854,14 @@ Print this checklist and check off each item:
 - [ ] Database connectivity verified
 
 ### Payments
+
 - [ ] Webhook URLs configured in Paystack
 - [ ] Webhook URLs configured in PayFast
 - [ ] Payment endpoints tested
 - [ ] Test transaction successful
 
 ### Testing
+
 - [ ] All automated tests pass
 - [ ] Manual registration test works
 - [ ] Manual login test works
@@ -825,6 +869,7 @@ Print this checklist and check off each item:
 - [ ] Payment flow completes
 
 ### Production Ready
+
 - [ ] Custom domain configured (optional)
 - [ ] SSL certificate installed
 - [ ] Monitoring alerts set up
@@ -834,11 +879,12 @@ Print this checklist and check off each item:
 
 ---
 
-## 🎉 Success!
+## 🎉 Success
 
 If you've completed all steps, your CAPS360 platform is now live on Azure!
 
 **Next steps:**
+
 1. Monitor your application in the first 24 hours
 2. Gather user feedback
 3. Set up continuous deployment (CI/CD)
@@ -846,6 +892,7 @@ If you've completed all steps, your CAPS360 platform is now live on Azure!
 5. Implement additional features
 
 **Remember:**
+
 - Monitor costs daily for the first week
 - Review Application Insights regularly
 - Keep secrets secure and rotate them periodically

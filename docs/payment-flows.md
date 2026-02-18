@@ -3,45 +3,10 @@
 ## Overview
 
 CAPS360 uses a dual payment system:
-- **PayFast**: For trial payment capture (deferred payment after 14-day trial)
+
 - **Paystack**: For recurring monthly/annual subscriptions
 
 ## Flow Diagrams
-
-### 1. Free Trial Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant API
-    participant Firestore
-    participant CloudFunction
-    participant PayFast
-
-    User->>Frontend: Sign up
-    Frontend->>API: POST /auth/register
-    API->>Firestore: Create user (currentTier=study_help)
-    API-->>Frontend: User + Token
-    
-    User->>Frontend: Choose "Start Free Trial"
-    Frontend->>API: POST /subscriptions/trial/start
-    API->>Firestore: Update user (trialPremium=true, trialEndDate=now+14days)
-    API-->>Frontend: Trial started
-    
-    Note over User,Firestore: User has 14 days of Premium access
-    
-    CloudFunction->>Firestore: Daily check (trial_end_date <= now)
-    CloudFunction->>User: Send payment reminder email
-    CloudFunction->>PayFast: Generate payment URL
-    CloudFunction->>User: Send payment link
-    
-    User->>PayFast: Complete payment
-    PayFast->>API: Webhook (payment success)
-    API->>Firestore: Update user (trialPremium=false, create subscription)
-    
-    Note over User,Firestore: User converted to paid subscriber
-```
 
 ### 2. Immediate Paid Subscription Flow
 
@@ -94,36 +59,12 @@ sequenceDiagram
 
 ## Payment Provider Details
 
-### PayFast Integration
-
-**Use Case**: Trial payment capture after 14-day free trial
-
-**Flow**:
-1. User completes 14-day trial
-2. Cloud Function generates PayFast payment URL
-3. User receives email with payment link
-4. User completes one-time payment on PayFast
-5. PayFast sends ITN (Instant Transaction Notification) to webhook
-6. Webhook verifies signature and updates user status
-
-**Webhook Endpoint**: `/api/payments/payfast/webhook`
-
-**Signature Verification**:
-```typescript
-// MD5 hash of parameters + passphrase
-const signature = md5(paramString + passphrase)
-```
-
-**Payment Data**:
-- `m_payment_id`: User ID
-- `payment_status`: COMPLETE | FAILED
-- `amount_gross`: Payment amount in ZAR
-
 ### Paystack Integration
 
 **Use Case**: Recurring monthly/annual subscriptions
 
 **Flow**:
+
 1. User chooses to pay immediately
 2. Frontend initializes Paystack transaction
 3. User completes payment on Paystack
@@ -134,17 +75,20 @@ const signature = md5(paramString + passphrase)
 **Webhook Endpoint**: `/api/payments/paystack/webhook`
 
 **Signature Verification**:
+
 ```typescript
 // HMAC SHA512 of payload
 const hash = crypto.createHmac('sha512', secretKey).update(payload).digest('hex')
 ```
 
 **Webhook Events**:
+
 - `subscription.create`: New subscription created
 - `charge.success`: Recurring payment successful
 - `subscription.disable`: Subscription cancelled
 
 **Subscription Plans**:
+
 - Study Help: R39/month (plan_studyhelp)
 - Standard: R99/month (plan_standard)
 - Premium: R149/month (plan_premium)
@@ -211,13 +155,8 @@ if (effectiveTier < requiredTier) {
 
 ### Payment Failures
 
-**Trial Payment Failed**:
-1. User remains on Study Help tier
-2. Send email with retry link
-3. Allow 3 retry attempts
-4. After 3 failures, permanently downgrade
-
 **Recurring Payment Failed**:
+
 1. Paystack retries automatically (3 attempts)
 2. Send payment failure notification
 3. If all retries fail, suspend subscription
@@ -226,27 +165,16 @@ if (effectiveTier < requiredTier) {
 ### Webhook Failures
 
 **Retry Logic**:
-- PayFast: Manual retry via dashboard
+
 - Paystack: Automatic retry (up to 3 times)
 
 **Monitoring**:
+
 - Log all webhook events
 - Alert on signature verification failures
 - Track payment success/failure rates
 
 ## Testing
-
-### PayFast Sandbox
-
-```bash
-# Test credentials
-MERCHANT_ID=10000100
-MERCHANT_KEY=46f0cd694581a
-PASSPHRASE=jt7NOE43FZPn
-
-# Test payment URL
-https://sandbox.payfast.co.za/eng/process?merchant_id=10000100&...
-```
 
 ### Paystack Test Mode
 
@@ -300,17 +228,20 @@ pk_test_xxxxxxxxxxxxx
 ### Common Issues
 
 **User not upgraded after payment**:
+
 1. Check webhook logs
 2. Verify signature validation
 3. Check Firestore user record
 4. Manually trigger webhook if needed
 
 **Trial not starting**:
+
 1. Check API logs
 2. Verify Firestore write succeeded
 3. Check user's current state
 
 **Welcome premium not expiring**:
+
 1. Check Cloud Function logs
 2. Verify scheduler is running
 3. Manually trigger function if needed

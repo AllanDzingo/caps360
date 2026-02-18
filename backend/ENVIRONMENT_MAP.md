@@ -10,6 +10,7 @@
 
 - Store secrets (DB, JWT, API keys) in Azure Key Vault and reference from App Service where possible.
 - Do not hardcode secrets in code or repo.
+
 # CAPS360 Environment Variable Map
 
 | Variable                | Local Example Value                                 | Azure Example Value / Source                | Description                                 |
@@ -31,10 +32,6 @@
 | SUPABASE_SERVICE_ROLE_KEY| (legacy, for Auth only)                            | (legacy, for Auth only)                     | Supabase service key (to be removed)        |
 | GEMINI_API_KEY          | your-gemini-api-key                                 | (Key Vault secret)                          | Gemini AI API key                          |
 | GEMINI_MODEL            | gemini-1.5-flash                                    | gemini-1.5-flash                            | Gemini model name                          |
-| PAYFAST_MERCHANT_ID     |                                                     | (Key Vault secret)                          | PayFast merchant ID                        |
-| PAYFAST_MERCHANT_KEY    |                                                     | (Key Vault secret)                          | PayFast merchant key                       |
-| PAYFAST_PASSPHRASE      |                                                     | (Key Vault secret)                          | PayFast passphrase                         |
-| PAYFAST_SANDBOX         | true                                                | false                                       | Use PayFast sandbox                        |
 | PAYSTACK_SECRET_KEY     |                                                     | (Key Vault secret)                          | Paystack secret key                        |
 | PAYSTACK_PUBLIC_KEY     |                                                     | (Key Vault secret)                          | Paystack public key                        |
 | STUDY_HELP_PRICE        | 3900                                                | 3900                                        | Study help price (cents)                   |

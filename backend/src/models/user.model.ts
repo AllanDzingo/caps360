@@ -52,7 +52,7 @@ export interface Subscription {
     status: SubscriptionStatus;
 
     // Payment provider info
-    paymentProvider: 'payfast' | 'paystack';
+    paymentProvider: 'paystack';
     paystackSubscriptionId?: string;
     paystackCustomerCode?: string;
 

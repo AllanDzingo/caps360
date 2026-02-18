@@ -1,6 +1,6 @@
 # ✅ CAPS360 AZURE DEPLOYMENT - COMPLETE SOLUTION
 
-## 🎉 DEPLOYMENT READY!
+## 🎉 DEPLOYMENT READY
 
 Your CAPS360 Azure deployment solution is now **100% complete** and ready for production use.
 
@@ -47,7 +47,6 @@ Your CAPS360 Azure deployment solution is now **100% complete** and ready for pr
 
 6. **`configure-payments.ps1`** - Payment integration setup
    - Configures Paystack webhooks
-   - Configures PayFast webhooks
    - Tests payment endpoints
    - ⏱️ Runtime: ~2 minutes
 
@@ -59,14 +58,14 @@ Your CAPS360 Azure deployment solution is now **100% complete** and ready for pr
 
 ### Documentation (docs/)
 
-8. **`COMPLETE-DEPLOYMENT-GUIDE.md`** - Full deployment guide
+1. **`COMPLETE-DEPLOYMENT-GUIDE.md`** - Full deployment guide
    - Step-by-step instructions
    - Troubleshooting section
    - Security best practices
    - Cost optimization tips
    - 📄 50+ pages of documentation
 
-9. **`DEPLOYMENT-QUICKSTART.md`** - Quick reference
+2. **`DEPLOYMENT-QUICKSTART.md`** - Quick reference
    - 5-minute quick start
    - Common commands
    - Quick troubleshooting
@@ -88,12 +87,11 @@ cd scripts
   -ResourceGroup caps360-prod `
   -JwtSecret "your-64-char-secret" `
   -GeminiApiKey "your-gemini-key" `
-  -PaystackSecretKey "your-paystack-key" `
-  -PayfastMerchantId "your-payfast-id" `
-  -PayfastMerchantKey "your-payfast-key"
+  -PaystackSecretKey "your-paystack-key"
 ```
 
 **What happens:**
+
 1. ✅ Database deployed (5-7 min)
 2. ✅ Backend deployed (4-6 min)
 3. ✅ Frontend deployed (3-5 min)
@@ -135,16 +133,17 @@ Deploy components individually:
 ## 📋 Prerequisites
 
 ### Required
+
 - ✅ Azure CLI installed (`az login` working)
 - ✅ Node.js 20+ and npm
 - ✅ PostgreSQL client (psql)
 - ✅ Active Azure subscription
 
 ### Required Secrets
+
 - ✅ JWT_SECRET (generate with PowerShell)
 - ✅ GEMINI_API_KEY or OPENAI_API_KEY
 - ⭕ PAYSTACK_SECRET_KEY (optional, for payments)
-- ⭕ PAYFAST credentials (optional, for payments)
 
 ---
 
@@ -187,12 +186,14 @@ Deploy components individually:
 ## 🔍 Features
 
 ### ✨ Smart Deployment
+
 - **Idempotent:** Safe to run multiple times
 - **Error Handling:** Detailed error messages
 - **Verification:** Tests connectivity after each step
 - **Colored Output:** Easy to read progress
 
 ### 🛡️ Security
+
 - **Secrets Management:** Secure variable handling
 - **Firewall Rules:** Automatic configuration
 - **SSL/TLS:** HTTPS enforced
@@ -200,12 +201,14 @@ Deploy components individually:
 - **Rate Limiting:** Built into backend
 
 ### 📊 Monitoring
+
 - **Application Insights:** Full telemetry
 - **Health Checks:** Automated monitoring
 - **Log Streaming:** Real-time logs
 - **Alerts:** Can be configured
 
 ### 🧪 Testing
+
 - **15 Automated Tests:**
   1. Backend health check
   2. Frontend accessibility
@@ -228,6 +231,7 @@ Deploy components individually:
 ## 💰 Cost Estimate
 
 **Monthly costs (South Africa North):**
+
 - PostgreSQL Flexible Server (B2s): ~R600
 - App Service Plan (B1): ~R600
 - Static Web Apps (Free): R0
@@ -242,9 +246,11 @@ Deploy components individually:
 ## 📖 Documentation
 
 ### Quick Start
+
 - Read: `DEPLOYMENT-QUICKSTART.md` (5-minute guide)
 
 ### Full Guide
+
 - Read: `docs/COMPLETE-DEPLOYMENT-GUIDE.md` (comprehensive)
   - Prerequisites
   - Step-by-step instructions
@@ -258,6 +264,7 @@ Deploy components individually:
 ## ✅ Deployment Checklist
 
 ### Before You Start
+
 - [ ] Azure CLI installed and authenticated
 - [ ] Node.js 20+ installed
 - [ ] PostgreSQL client installed
@@ -265,6 +272,7 @@ Deploy components individually:
 - [ ] Read DEPLOYMENT-QUICKSTART.md
 
 ### During Deployment
+
 - [ ] Run deploy-master.ps1 (or individual scripts)
 - [ ] Save database connection string
 - [ ] Save backend URL
@@ -272,6 +280,7 @@ Deploy components individually:
 - [ ] Note any warnings/errors
 
 ### After Deployment
+
 - [ ] Run test-deployment.ps1
 - [ ] Verify all tests pass (15/15)
 - [ ] Login to frontend successfully
@@ -303,9 +312,7 @@ cd "C:\Users\Hanco Sipsma\Desktop\Allan 2025\CAPS360\scripts"
   -Location southafricanorth `
   -JwtSecret $jwtSecret `
   -GeminiApiKey "AIzaSyC..." `
-  -PaystackSecretKey "sk_live_..." `
-  -PayfastMerchantId "10000100" `
-  -PayfastMerchantKey "46f0cd69..."
+  -PaystackSecretKey "sk_live_..."
 
 # Step 5: Wait for completion (~20 minutes)
 # ✓ Database deployed
@@ -328,18 +335,21 @@ Start-Process "https://caps360-web-prod.azurestaticapps.net"
 ### Common Issues
 
 **Issue: "Azure CLI not found"**
+
 ```powershell
 # Install Azure CLI
 winget install Microsoft.AzureCLI
 ```
 
 **Issue: "PostgreSQL client not found"**
+
 ```powershell
 # Download and install PostgreSQL tools
 # https://www.postgresql.org/download/
 ```
 
 **Issue: "Database connection failed"**
+
 ```powershell
 # Check firewall rules
 az postgres flexible-server firewall-rule list `
@@ -348,6 +358,7 @@ az postgres flexible-server firewall-rule list `
 ```
 
 **Issue: "Backend not healthy"**
+
 ```powershell
 # Check logs
 az webapp log tail `
@@ -362,6 +373,7 @@ az webapp log tail `
 ## 🎉 Success Criteria
 
 Your deployment is successful when:
+
 - ✅ Master script completes without errors
 - ✅ All tests pass (15/15 in test-deployment.ps1)
 - ✅ Can access frontend URL
@@ -423,6 +435,7 @@ Your deployment is successful when:
 ## 🏆 What You Get
 
 A fully deployed, production-ready CAPS360 platform with:
+
 - ✅ Secure database with all tables
 - ✅ Scalable backend API
 - ✅ Fast, responsive frontend

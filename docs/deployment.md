@@ -75,11 +75,8 @@ Required GitHub Secrets:
 1. **Update Frontend Environment Variables**:
    - Ensure `VITE_API_URL` points to your backend Fly.io URL.
    - Set up `VITE_PAYSTACK_PUBLIC_KEY` in the frontend environment.
-
-2. **Configure Webhook URLs**:
-   - Update PayFast and Paystack webhook URLs to point to your backend API:
-     - `https://your-backend-fly-app.fly.dev/api/payments/webhooks/payfast`
-     - `https://your-backend-fly-app.fly.dev/api/payments/webhooks/paystack`
+   - Update Paystack webhook URL to point to your backend API:
+     - `https://your-backend-fly-app.fly.dev/api/payments/webhook`
 
 ## Monitoring & Operations
 

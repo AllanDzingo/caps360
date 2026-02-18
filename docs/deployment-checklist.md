@@ -3,12 +3,14 @@
 ## Pre-Deployment Setup
 
 ### Azure Account & Permissions
+
 - [ ] Azure subscription created and active
 - [ ] Appropriate Azure permissions assigned (Contributor or Owner role)
 - [ ] Azure CLI installed and logged in (`az login`)
 - [ ] Resource quotas verified in target region
 
 ### Environment Configuration
+
 - [ ] Environment variables defined for the target environment (dev/staging/prod)
 - [ ] `.env.prod`, `.env.staging`, or `.env.dev` file created with:
   - [ ] `NODE_ENV` set correctly
@@ -19,6 +21,7 @@
   - [ ] Storage configuration (if using Azure Blob Storage)
 
 ### Code Quality
+
 - [ ] All tests passing (`npm test`)
 - [ ] Linting passes (`npm run lint`)
 - [ ] No console errors in local development
@@ -27,6 +30,7 @@
 - [ ] All changes committed to version control
 
 ### Frontend Preparation
+
 - [ ] `VITE_API_URL` environment variable correct for target environment
 - [ ] `staticwebapp.config.json` reviewed
 - [ ] Security headers configured
@@ -35,6 +39,7 @@
 - [ ] PWA configuration updated (if applicable)
 
 ### Backend Preparation
+
 - [ ] Database schema migrations prepared
 - [ ] API endpoints tested
 - [ ] Error handling comprehensive
@@ -48,15 +53,18 @@
 ### Pre-Deployment Commands
 
 #### Azure Setup
+
 - [ ] Verify Azure subscription: `az account show`
 - [ ] Check region availability: `az account list-locations`
 - [ ] Verify quotas: `az vm usage list --location eastus`
 
 #### Resource Group
+
 - [ ] Resource group will be created or verified by script
 - [ ] Naming convention followed: `caps360-<environment>`
 
 #### Backend Deployment
+
 - [ ] Backend builds successfully: `npm run build`
 - [ ] `dist` directory created and contains compiled code
 - [ ] App Service Plan created with appropriate SKU
@@ -66,6 +74,7 @@
 - [ ] Backend is accessible and responding to requests
 
 #### Frontend Deployment
+
 - [ ] Frontend builds successfully: `npm run build`
 - [ ] `dist` directory created with optimized assets
 - [ ] Static Web App created
@@ -74,6 +83,7 @@
 - [ ] API calls route to correct backend
 
 #### Database (if using Azure PostgreSQL)
+
 - [ ] PostgreSQL server created
 - [ ] Firewall rules configured
 - [ ] Database created and schema applied
@@ -82,6 +92,7 @@
 - [ ] High availability configured (if prod)
 
 ### Monitoring & Health Checks
+
 - [ ] Application Insights instance created
 - [ ] Instrumentation key configured in backend
 - [ ] Backend health endpoint responding: `curl https://[backend-url]/health`
@@ -93,16 +104,18 @@
 ## Post-Deployment Verification
 
 ### Functional Testing
+
 - [ ] Backend API endpoints tested
 - [ ] Frontend UI renders correctly
 - [ ] Authentication flow works
 - [ ] User registration functional
-- [ ] Payment flow tested (Paystack/PayFast)
+- [ ] Payment flow tested (Paystack)
 - [ ] Content delivery working
 - [ ] Progress tracking functional
 - [ ] Analytics capturing correctly
 
 ### Performance Testing
+
 - [ ] Page load times acceptable (< 3s)
 - [ ] API response times acceptable (< 500ms)
 - [ ] Database queries optimized
@@ -111,6 +124,7 @@
 - [ ] CPU usage within limits
 
 ### Security Verification
+
 - [ ] HTTPS enforced on all endpoints
 - [ ] Security headers present and correct:
   - [ ] Content-Security-Policy
@@ -125,6 +139,7 @@
 - [ ] XSS protection enabled
 
 ### Logging & Monitoring
+
 - [ ] Application Insights receiving data
 - [ ] Logs visible in Azure portal
 - [ ] Error tracking working
@@ -133,6 +148,7 @@
 - [ ] Alerts configured for errors
 
 ### Database Verification (if applicable)
+
 - [ ] Connection string validated
 - [ ] Schema created successfully
 - [ ] Test data loaded
@@ -143,6 +159,7 @@
 ## Domain & SSL Configuration
 
 ### Custom Domain (if applicable)
+
 - [ ] Custom domain DNS records configured
 - [ ] CNAME/A record pointing to Azure resource
 - [ ] SSL certificate provisioned automatically
@@ -151,6 +168,7 @@
 - [ ] Redirect from www handled
 
 ### CDN Configuration (optional)
+
 - [ ] Azure CDN created and configured
 - [ ] Origin configured correctly
 - [ ] Cache rules optimized
@@ -160,6 +178,7 @@
 ## CI/CD Pipeline Setup
 
 ### GitHub Actions (optional)
+
 - [ ] `.github/workflows/deploy-azure.yml` created
 - [ ] `AZURE_CREDENTIALS` secret configured
 - [ ] `AZURE_STATIC_WEB_APPS_API_TOKEN` secret configured
@@ -168,6 +187,7 @@
 - [ ] Notifications configured
 
 ### Azure DevOps (alternative)
+
 - [ ] Pipeline yaml file created
 - [ ] Service connections configured
 - [ ] Build artifacts generated
@@ -178,6 +198,7 @@
 ## Cost & Quotas
 
 ### Azure Resources
+
 - [ ] App Service Plan SKU appropriate for environment
 - [ ] Static Web App tier meets requirements
 - [ ] Database SKU sized correctly
@@ -186,6 +207,7 @@
 - [ ] Cost estimates reviewed
 
 ### Monitoring Costs
+
 - [ ] Application Insights sampling configured
 - [ ] Data retention policies set
 - [ ] Cost alerts configured
@@ -194,6 +216,7 @@
 ## Backup & Disaster Recovery
 
 ### Backups Configured
+
 - [ ] App Service backups enabled
 - [ ] Database automated backups enabled
 - [ ] Backup retention period set (min 7 days)
@@ -201,6 +224,7 @@
 - [ ] Geographic redundancy enabled (prod)
 
 ### Disaster Recovery Plan
+
 - [ ] Failover procedures documented
 - [ ] RTO/RPO targets defined
 - [ ] Failover tested
@@ -209,6 +233,7 @@
 ## Documentation & Knowledge Transfer
 
 ### Deployment Documentation
+
 - [ ] Deployment guide completed
 - [ ] Architecture diagrams updated
 - [ ] Environment configuration documented
@@ -216,6 +241,7 @@
 - [ ] Troubleshooting guide completed
 
 ### Team Knowledge
+
 - [ ] Team trained on deployment process
 - [ ] On-call runbooks shared
 - [ ] Alert handling procedures documented
@@ -224,6 +250,7 @@
 ## Post-Deployment Monitoring (First 24 Hours)
 
 ### Real-time Monitoring
+
 - [ ] Error rates stable and low
 - [ ] Performance metrics within acceptable range
 - [ ] No unusual database activity
@@ -231,6 +258,7 @@
 - [ ] User reports monitored
 
 ### Scheduled Checks
+
 - [ ] Daily review of Application Insights
 - [ ] Database performance monitored
 - [ ] API latency acceptable

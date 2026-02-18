@@ -7,78 +7,6 @@ import logger from '../config/logger';
 import { PaymentRecord } from '../models/analytics.model';
 
 export class PaymentService {
-    /**
-     * PayFast: Generate payment URL for trial payment capture
-     */
-    generatePayFastPaymentUrl(userId: string, amount: number, itemName: string): string {
-        const merchantId = config.payfast.merchantId;
-        const merchantKey = config.payfast.merchantKey;
-        const returnUrl = `${process.env.FRONTEND_URL}/payment/success`;
-        const cancelUrl = `${process.env.FRONTEND_URL}/payment/cancel`;
-        const notifyUrl = `${process.env.API_URL}/api/payments/payfast/webhook`;
-
-        const data: Record<string, string> = {
-            merchant_id: merchantId,
-            merchant_key: merchantKey,
-            return_url: returnUrl,
-            cancel_url: cancelUrl,
-            notify_url: notifyUrl,
-            name_first: 'CAPS360',
-            name_last: 'User',
-            email_address: 'user@caps360.co.za',
-            m_payment_id: userId,
-            amount: (amount / 100).toFixed(2), // Convert cents to rands
-            item_name: itemName,
-        };
-
-        // Generate signature
-        const signature = this.generatePayFastSignature(data);
-        data.signature = signature;
-
-        // Build query string
-        const queryString = Object.keys(data)
-            .map(key => `${key}=${encodeURIComponent(data[key])}`)
-            .join('&');
-
-        const baseUrl = config.payfast.sandbox
-            ? 'https://sandbox.payfast.co.za/eng/process'
-            : 'https://www.payfast.co.za/eng/process';
-
-        return `${baseUrl}?${queryString}`;
-    }
-
-    /**
-     * PayFast: Verify webhook signature
-     */
-    verifyPayFastSignature(data: Record<string, string>, signature: string): boolean {
-        const generatedSignature = this.generatePayFastSignature(data);
-        return generatedSignature === signature;
-    }
-
-    /**
-     * PayFast: Generate MD5 signature
-     */
-    private generatePayFastSignature(data: Record<string, string>): string {
-        // Create parameter string
-        let paramString = '';
-        const sortedKeys = Object.keys(data).sort();
-
-        for (const key of sortedKeys) {
-            if (key !== 'signature') {
-                paramString += `${key}=${encodeURIComponent(data[key].trim()).replace(/%20/g, '+')}&`;
-            }
-        }
-
-        // Remove last ampersand
-        paramString = paramString.slice(0, -1);
-
-        // Add passphrase if set
-        if (config.payfast.passphrase) {
-            paramString += `&passphrase=${encodeURIComponent(config.payfast.passphrase.trim()).replace(/%20/g, '+')}`;
-        }
-
-        return crypto.createHash('md5').update(paramString).digest('hex');
-    }
 
     /**
      * Paystack: Initialize payment transaction
@@ -228,7 +156,7 @@ export class PaymentService {
      */
     async recordPayment(
         userId: string,
-        provider: 'payfast' | 'paystack',
+        provider: 'paystack',
         amount: number,
         status: 'pending' | 'success' | 'failed',
         metadata: Record<string, any>

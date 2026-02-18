@@ -5,34 +5,66 @@ $app = "caps360-backend"
 
 Write-Host "Setting secrets for Fly.io app: $app" -ForegroundColor Cyan
 
-# Supabase Configuration
+# Paystack Configuration (only payment provider)
+# Replace with your actual keys OR ensure they are set in your environment
+$PAYSTACK_SECRET_KEY = $env:PAYSTACK_SECRET_KEY
+$PAYSTACK_PUBLIC_KEY = $env:PAYSTACK_PUBLIC_KEY
+
+if (-not $PAYSTACK_SECRET_KEY) {
+  $PAYSTACK_SECRET_KEY = Read-Host "Enter Paystack Secret Key"
+}
+if (-not $PAYSTACK_PUBLIC_KEY) {
+  $PAYSTACK_PUBLIC_KEY = Read-Host "Enter Paystack Public Key"
+}
+
 flyctl secrets set -a $app `
-  SUPABASE_URL="https://uldvvywrnbzlqdtnmpyk.supabase.co" `
-  SUPABASE_ANON_KEY="sb_publishable_xv62FtlS3pwSH8clF39pMw_wZF3WG7c" `
-  SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsZHZ2eXdybmJ6bHFkdG5tcHlrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTM2OTM5MiwiZXhwIjoyMDgwOTQ1MzkyfQ.4P0foNODgnvarlViN2QCI0zVpofvYH11o4BymFfKlds"
+  PAYSTACK_SECRET_KEY="$PAYSTACK_SECRET_KEY" `
+  PAYSTACK_PUBLIC_KEY="$PAYSTACK_PUBLIC_KEY"
 
-Write-Host "✓ Supabase credentials set" -ForegroundColor Green
-
-# Authentication
-flyctl secrets set -a $app `
-  JWT_SECRET="sb_secret_02tZWH7CJvPYBJUlXr3svA_yrZd39t7" `
-  JWT_EXPIRES_IN="7d"
-
-Write-Host "✓ JWT configuration set" -ForegroundColor Green
+Write-Host "✓ Paystack credentials set" -ForegroundColor Green
 
 # AI Configuration
+$GEMINI_API_KEY = $env:GEMINI_API_KEY
+if (-not $GEMINI_API_KEY) {
+  $GEMINI_API_KEY = Read-Host "Enter Gemini API Key"
+}
+
 flyctl secrets set -a $app `
-  GEMINI_API_KEY="AIzaSyCHvttgREd6Ru6hOuAwD6QzQqO6oKiL_nE" `
+  GEMINI_API_KEY="$GEMINI_API_KEY" `
   GEMINI_MODEL="gemini-1.5-flash"
 
 Write-Host "✓ Gemini AI configuration set" -ForegroundColor Green
 
-# Paystack Configuration (only payment provider)
-flyctl secrets set -a $app `
-  PAYSTACK_SECRET_KEY="sk_test_66adb4c5bab09c5be7d2cbd1e75cbe0a53707ac0" `
-  PAYSTACK_PUBLIC_KEY="pk_test_3587a53505a00ddc9e83a70031d8b04cc29228cb"
+# Supabase Configuration
+$SUPABASE_URL = "https://uldvvywrnbzlqdtnmpyk.supabase.co"
+$SUPABASE_ANON_KEY = $env:SUPABASE_ANON_KEY
+$SUPABASE_SERVICE_ROLE_KEY = $env:SUPABASE_SERVICE_ROLE_KEY
 
-Write-Host "✓ Paystack credentials set" -ForegroundColor Green
+if (-not $SUPABASE_ANON_KEY) {
+  $SUPABASE_ANON_KEY = Read-Host "Enter Supabase Anon Key"
+}
+if (-not $SUPABASE_SERVICE_ROLE_KEY) {
+  $SUPABASE_SERVICE_ROLE_KEY = Read-Host "Enter Supabase Service Role Key"
+}
+
+flyctl secrets set -a $app `
+  SUPABASE_URL="$SUPABASE_URL" `
+  SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" `
+  SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY"
+
+Write-Host "✓ Supabase credentials set" -ForegroundColor Green
+
+# Authentication
+$JWT_SECRET = $env:JWT_SECRET
+if (-not $JWT_SECRET) {
+  $JWT_SECRET = Read-Host "Enter JWT Secret"
+}
+
+flyctl secrets set -a $app `
+  JWT_SECRET="$JWT_SECRET" `
+  JWT_EXPIRES_IN="7d"
+
+Write-Host "✓ JWT configuration set" -ForegroundColor Green
 
 # Subscription Plans (in cents)
 flyctl secrets set -a $app `

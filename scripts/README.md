@@ -9,6 +9,7 @@ This directory contains production-ready PowerShell scripts to deploy the entire
 ## 📦 What's Included
 
 ### Deployment Scripts
+
 - **`deploy-master.ps1`** - Master orchestration (deploys everything)
 - **`deploy-database.ps1`** - PostgreSQL database setup
 - **`deploy-backend.ps1`** - Backend API deployment
@@ -18,9 +19,11 @@ This directory contains production-ready PowerShell scripts to deploy the entire
 - **`test-deployment.ps1`** - End-to-end testing (15 tests)
 
 ### Configuration
+
 - **`deployment-secrets-template.ps1`** - Template for organizing secrets
 
 ### Documentation
+
 - **`../DEPLOYMENT-SUMMARY.md`** - Overview of all scripts
 - **`../DEPLOYMENT-QUICKSTART.md`** - 5-minute quick start
 - **`../docs/COMPLETE-DEPLOYMENT-GUIDE.md`** - Full deployment guide (50+ pages)
@@ -30,6 +33,7 @@ This directory contains production-ready PowerShell scripts to deploy the entire
 ## ⚡ Quick Start
 
 ### 1. Prerequisites
+
 ```powershell
 # Install Azure CLI
 winget install Microsoft.AzureCLI
@@ -45,6 +49,7 @@ psql --version
 ```
 
 ### 2. Prepare Secrets
+
 ```powershell
 # Copy template
 Copy-Item deployment-secrets-template.ps1 deployment-secrets.ps1
@@ -57,6 +62,7 @@ notepad deployment-secrets.ps1
 ```
 
 ### 3. Deploy
+
 ```powershell
 # Option A: Load from secrets file
 . .\deployment-secrets.ps1
@@ -71,6 +77,7 @@ notepad deployment-secrets.ps1
 ```
 
 ### 4. Test
+
 ```powershell
 .\test-deployment.ps1 `
   -Environment prod `
@@ -85,18 +92,21 @@ notepad deployment-secrets.ps1
 ## 📋 Script Details
 
 ### deploy-master.ps1
+
 **Master orchestration script - Use this for first deployment**
 
 **What it does:**
+
 1. Deploys PostgreSQL database + schema
 2. Deploys backend API to App Service
 3. Deploys frontend to Static Web Apps
 4. Deploys Azure Functions
-5. Configures payment webhooks
+5. Configures Paystack webhooks
 6. Runs end-to-end tests
 7. Provides deployment summary
 
 **Usage:**
+
 ```powershell
 .\deploy-master.ps1 `
   -Environment <dev|staging|prod> `
@@ -110,9 +120,11 @@ notepad deployment-secrets.ps1
 ---
 
 ### deploy-database.ps1
+
 **Database deployment only**
 
 **What it does:**
+
 1. Creates PostgreSQL Flexible Server
 2. Configures firewall rules
 3. Creates database
@@ -121,6 +133,7 @@ notepad deployment-secrets.ps1
 6. Verifies connectivity
 
 **Usage:**
+
 ```powershell
 .\deploy-database.ps1 `
   -Environment prod `
@@ -134,9 +147,11 @@ notepad deployment-secrets.ps1
 ---
 
 ### deploy-backend.ps1
+
 **Backend API deployment only**
 
 **What it does:**
+
 1. Builds TypeScript backend
 2. Creates App Service Plan + Web App
 3. Configures environment variables
@@ -145,6 +160,7 @@ notepad deployment-secrets.ps1
 6. Configures CORS and health checks
 
 **Usage:**
+
 ```powershell
 .\deploy-backend.ps1 `
   -Environment prod `
@@ -159,9 +175,11 @@ notepad deployment-secrets.ps1
 ---
 
 ### deploy-frontend.ps1
+
 **Frontend deployment only**
 
 **What it does:**
+
 1. Creates .env file with backend URL
 2. Builds React/Vite app
 3. Creates Static Web App
@@ -169,6 +187,7 @@ notepad deployment-secrets.ps1
 5. Configures routing and security
 
 **Usage:**
+
 ```powershell
 .\deploy-frontend.ps1 `
   -Environment prod `
@@ -181,9 +200,11 @@ notepad deployment-secrets.ps1
 ---
 
 ### deploy-functions.ps1
+
 **Azure Functions deployment only**
 
 **What it does:**
+
 1. Builds functions
 2. Creates Storage Account
 3. Creates Function App
@@ -191,12 +212,14 @@ notepad deployment-secrets.ps1
 5. Configures Application Insights
 
 **Functions deployed:**
+
 - welcomeEmail
 - weeklySummary
 - inactivityReminder
 - forgotPassword
 
 **Usage:**
+
 ```powershell
 .\deploy-functions.ps1 `
   -Environment prod `
@@ -209,22 +232,24 @@ notepad deployment-secrets.ps1
 ---
 
 ### configure-payments.ps1
+
 **Payment integration setup**
 
 **What it does:**
+
 1. Tests webhook endpoints
 2. Updates backend settings
 3. Provides webhook URLs
 4. Shows configuration instructions
 
 **Usage:**
+
 ```powershell
 .\configure-payments.ps1 `
   -Environment prod `
   -ResourceGroup caps360-prod `
   -BackendUrl "https://..." `
-  -PaystackSecretKey "..." `
-  -PayfastMerchantId "..."
+  -PaystackSecretKey "..."
 ```
 
 **Runtime:** 2 minutes
@@ -232,10 +257,12 @@ notepad deployment-secrets.ps1
 ---
 
 ### test-deployment.ps1
+
 **End-to-end testing**
 
 **What it does:**
 15 comprehensive tests:
+
 1. Backend health
 2. Frontend accessibility
 3. CORS configuration
@@ -253,6 +280,7 @@ notepad deployment-secrets.ps1
 15. Security headers
 
 **Usage:**
+
 ```powershell
 .\test-deployment.ps1 `
   -Environment prod `
@@ -267,24 +295,28 @@ notepad deployment-secrets.ps1
 ## 🎯 Deployment Scenarios
 
 ### Scenario 1: First Time Deployment
+
 ```powershell
 # Use master script
 .\deploy-master.ps1 -Environment prod -ResourceGroup caps360-prod -JwtSecret "..." -GeminiApiKey "..."
 ```
 
 ### Scenario 2: Update Backend Only
+
 ```powershell
 # Backend code changes
 .\deploy-backend.ps1 -Environment prod -ResourceGroup caps360-prod -DatabaseConnectionString "..." -JwtSecret "..." -GeminiApiKey "..." -SkipBuild $false
 ```
 
 ### Scenario 3: Update Frontend Only
+
 ```powershell
 # Frontend code changes
 .\deploy-frontend.ps1 -Environment prod -ResourceGroup caps360-prod -BackendUrl "https://..." -SkipBuild $false
 ```
 
 ### Scenario 4: Database Schema Changes
+
 ```powershell
 # 1. Update backend/src/db/schema.sql
 # 2. Redeploy database (will create new tables)
@@ -292,6 +324,7 @@ notepad deployment-secrets.ps1
 ```
 
 ### Scenario 5: Add New Environment Variable
+
 ```powershell
 # Update backend
 az webapp config appsettings set `
@@ -310,10 +343,9 @@ az webapp restart --name caps360-backend-prod --resource-group caps360-prod
 | Secret | Required | Purpose | How to Get |
 |--------|----------|---------|------------|
 | JWT_SECRET | ✅ Yes | Auth tokens | Generate: 64 random chars |
-| GEMINI_API_KEY | ✅ Yes* | AI chat | https://makersuite.google.com/app/apikey |
-| OPENAI_API_KEY | ✅ Yes* | AI chat | https://platform.openai.com/api-keys |
-| PAYSTACK_SECRET_KEY | ⭕ Optional | Subscriptions | https://dashboard.paystack.com |
-| PAYFAST_MERCHANT_ID | ⭕ Optional | Payments | https://www.payfast.co.za |
+| GEMINI_API_KEY | ✅ Yes* | AI chat | <https://makersuite.google.com/app/apikey> |
+| OPENAI_API_KEY | ✅ Yes* | AI chat | <https://platform.openai.com/api-keys> |
+| PAYSTACK_SECRET_KEY | ⭕ Optional | Subscriptions | <https://dashboard.paystack.com> |
 
 *Choose either Gemini or OpenAI
 
@@ -322,6 +354,7 @@ az webapp restart --name caps360-backend-prod --resource-group caps360-prod
 ## 💰 Cost Estimate
 
 **Monthly (South Africa North):**
+
 - PostgreSQL Flexible Server: ~R600
 - App Service (B1): ~R600
 - Static Web Apps: R0 (Free tier)
@@ -374,6 +407,7 @@ Azure Resource Group: caps360-prod
 ## ✅ Success Checklist
 
 After deployment, verify:
+
 - [ ] All tests pass (15/15)
 - [ ] Can access frontend URL
 - [ ] Can register new user
@@ -388,6 +422,7 @@ After deployment, verify:
 ## 🛠️ Common Commands
 
 ### View Logs
+
 ```powershell
 # Backend
 az webapp log tail --name caps360-backend-prod --resource-group caps360-prod
@@ -397,6 +432,7 @@ az functionapp log tail --name caps360-functions-prod --resource-group caps360-p
 ```
 
 ### Restart Services
+
 ```powershell
 # Backend
 az webapp restart --name caps360-backend-prod --resource-group caps360-prod
@@ -406,6 +442,7 @@ az functionapp restart --name caps360-functions-prod --resource-group caps360-pr
 ```
 
 ### Update Environment Variables
+
 ```powershell
 az webapp config appsettings set `
   --name caps360-backend-prod `
@@ -414,6 +451,7 @@ az webapp config appsettings set `
 ```
 
 ### Check Deployment Status
+
 ```powershell
 # Backend status
 az webapp show --name caps360-backend-prod --resource-group caps360-prod --query "state"
@@ -427,6 +465,7 @@ az functionapp show --name caps360-functions-prod --resource-group caps360-prod 
 ## 🐛 Troubleshooting
 
 ### Database Issues
+
 ```powershell
 # Check firewall rules
 az postgres flexible-server firewall-rule list --resource-group caps360-prod --name caps360-db-prod
@@ -436,6 +475,7 @@ az postgres flexible-server firewall-rule create --resource-group caps360-prod -
 ```
 
 ### Backend Issues
+
 ```powershell
 # View logs
 az webapp log tail --name caps360-backend-prod --resource-group caps360-prod
@@ -448,6 +488,7 @@ az webapp restart --name caps360-backend-prod --resource-group caps360-prod
 ```
 
 ### Frontend Issues
+
 - Check browser console
 - Verify environment variables at `/env.js`
 - Check backend CORS settings

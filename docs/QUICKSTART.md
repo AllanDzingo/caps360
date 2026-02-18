@@ -28,7 +28,7 @@ cp .env.example .env
 
 # Edit .env with your credentials
 # Required: SUPABASE_URL, SUPABASE_ANON_KEY, GEMINI_API_KEY, JWT_SECRET
-# Optional for local dev: PayFast and Paystack keys
+# Optional for local dev: Paystack keys
 
 # Run in development mode
 npm run dev
@@ -145,8 +145,6 @@ SUPABASE_URL=your-url
 SUPABASE_ANON_KEY=your-key
 GEMINI_API_KEY=your-gemini-key
 JWT_SECRET=your-secret-key
-PAYFAST_MERCHANT_ID=your-payfast-id
-PAYFAST_MERCHANT_KEY=your-payfast-key
 PAYSTACK_SECRET_KEY=your-paystack-key
 ```
 
@@ -181,7 +179,7 @@ VITE_PAYSTACK_PUBLIC_KEY=your-paystack-public-key
 
 1. **Customize Branding**: Update colors in `frontend-web/tailwind.config.js`
 2. **Add Content**: Create courses and lessons in Supabase
-3. **Configure Payments**: Set up PayFast and Paystack accounts
+3. **Configure Payments**: Set up Paystack account
 4. **Deploy**: Follow `docs/deployment.md` for production deployment
 5. **Mobile App**: Set up React Native development environment
 

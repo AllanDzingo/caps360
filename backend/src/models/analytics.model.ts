@@ -84,7 +84,7 @@ export interface PaymentRecord {
     subscriptionId?: string;
 
     // Payment details
-    provider: 'payfast' | 'paystack';
+    provider: 'paystack';
     amount: number;
     currency: string;
     status: 'pending' | 'success' | 'failed';

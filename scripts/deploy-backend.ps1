@@ -34,10 +34,6 @@ param(
     [string]$PaystackSecretKey,
 
     [Parameter(Mandatory = $false)]
-    [string]$PayfastMerchantId,
-
-    [Parameter(Mandatory = $false)]
-    [string]$PayfastMerchantKey,
 
     [Parameter(Mandatory = $false)]
     [string]$SupabaseUrl,

@@ -42,13 +42,6 @@ param(
     [string]$PaystackSecretKey,
 
     [Parameter(Mandatory = $false)]
-    [string]$PayfastMerchantId,
-
-    [Parameter(Mandatory = $false)]
-    [string]$PayfastMerchantKey,
-
-    [Parameter(Mandatory = $false)]
-    [string]$PayfastPassphrase,
 
     # Auth parameters (Supabase)
     [Parameter(Mandatory = $false)]
@@ -167,8 +160,6 @@ if (-not (Confirm-Action "This will deploy CAPS360 to Azure ($($Environment) env
 # ---------------------------
 # Auto-Load Environment Variables
 # ---------------------------
-Write-Step "Loading environment variables..."
-
 # Function to load env file
 function Load-EnvFile {
     param([string]$FilePath)
@@ -180,9 +171,6 @@ function Load-EnvFile {
                 $name = $matches[1].Trim()
                 $value = $matches[2].Trim()
                 if (-not (Get-Variable -Name $name -Scope Script -ErrorAction SilentlyContinue)) {
-                    # Only set if not already passed as param (though params are auto-bound, this sets global scope vars which might be picked up if logic used $env:VAR)
-                    # Actually, for script params, we need to manually assign to the variable if it's null/empty
-                    
                     # Map common env vars to script params
                     switch ($name) {
                         "JWT_SECRET" { if (-not $JwtSecret) { $script:JwtSecret = $value } }
@@ -190,53 +178,6 @@ function Load-EnvFile {
                         "GEMINI_API_KEY" { if (-not $GeminiApiKey) { $script:GeminiApiKey = $value } }
                         "OPENAI_API_KEY" { if (-not $OpenAIApiKey) { $script:OpenAIApiKey = $value } }
                         "PAYSTACK_SECRET_KEY" { if (-not $PaystackSecretKey) { $script:PaystackSecretKey = $value } }
-                        "PAYFAST_MERCHANT_ID" { if (-not $PayfastMerchantId) { $script:PayfastMerchantId = $value } }
-                        "PAYFAST_MERCHANT_KEY" { if (-not $PayfastMerchantKey) { $script:PayfastMerchantKey = $value } }
-                        "PAYFAST_PASSPHRASE" { if (-not $PayfastPassphrase) { $script:PayfastPassphrase = $value } }
-                        "SUPABASE_URL" { if (-not $SupabaseUrl) { $script:SupabaseUrl = $value } }
-                        "SUPABASE_ANON_KEY" { if (-not $SupabaseAnonKey) { $script:SupabaseAnonKey = $value } }
-                        "SUPABASE_SERVICE_ROLE_KEY" { if (-not $SupabaseServiceRoleKey) { $script:SupabaseServiceRoleKey = $value } }
-                        "COMMUNICATION_SERVICES_CONNECTION_STRING" { if (-not $CommunicationServicesConnectionString) { $script:CommunicationServicesConnectionString = $value } }
-                    }
-                }
-            }
-        }
-    }
-}
-
-Load-EnvFile "$projectRoot\.env"
-Load-EnvFile "$projectRoot\.env.$Environment"
-Write-Success "Environment variables loaded"
-
-# ---------------------------
-# Auto-Load Environment Variables
-# ---------------------------
-Write-Step "Loading environment variables..."
-
-# Function to load env file
-function Load-EnvFile {
-    param([string]$FilePath)
-    if (Test-Path $FilePath) {
-        Write-Host "Loading $FilePath..." -ForegroundColor Gray
-        $content = Get-Content $FilePath
-        foreach ($line in $content) {
-            if ($line -match '^([^#=]+)=(.*)$') {
-                $name = $matches[1].Trim()
-                $value = $matches[2].Trim()
-                if (-not (Get-Variable -Name $name -Scope Script -ErrorAction SilentlyContinue)) {
-                    # Only set if not already passed as param (though params are auto-bound, this sets global scope vars which might be picked up if logic used $env:VAR)
-                    # Actually, for script params, we need to manually assign to the variable if it's null/empty
-                    
-                    # Map common env vars to script params
-                    switch ($name) {
-                        "JWT_SECRET" { if (-not $JwtSecret) { $script:JwtSecret = $value } }
-                        "DATABASE_URL" { if (-not $DatabaseConnectionString) { $script:DatabaseConnectionString = $value } }
-                        "GEMINI_API_KEY" { if (-not $GeminiApiKey) { $script:GeminiApiKey = $value } }
-                        "OPENAI_API_KEY" { if (-not $OpenAIApiKey) { $script:OpenAIApiKey = $value } }
-                        "PAYSTACK_SECRET_KEY" { if (-not $PaystackSecretKey) { $script:PaystackSecretKey = $value } }
-                        "PAYFAST_MERCHANT_ID" { if (-not $PayfastMerchantId) { $script:PayfastMerchantId = $value } }
-                        "PAYFAST_MERCHANT_KEY" { if (-not $PayfastMerchantKey) { $script:PayfastMerchantKey = $value } }
-                        "PAYFAST_PASSPHRASE" { if (-not $PayfastPassphrase) { $script:PayfastPassphrase = $value } }
                         "SUPABASE_URL" { if (-not $SupabaseUrl) { $script:SupabaseUrl = $value } }
                         "SUPABASE_ANON_KEY" { if (-not $SupabaseAnonKey) { $script:SupabaseAnonKey = $value } }
                         "SUPABASE_SERVICE_ROLE_KEY" { if (-not $SupabaseServiceRoleKey) { $script:SupabaseServiceRoleKey = $value } }
@@ -324,8 +265,6 @@ if (-not $SkipBackend) {
         if ($GeminiApiKey) { $backendParams['GeminiApiKey'] = $GeminiApiKey }
         if ($OpenAIApiKey) { $backendParams['OpenAIApiKey'] = $OpenAIApiKey }
         if ($PaystackSecretKey) { $backendParams['PaystackSecretKey'] = $PaystackSecretKey }
-        if ($PayfastMerchantId) { $backendParams['PayfastMerchantId'] = $PayfastMerchantId }
-        if ($PayfastMerchantKey) { $backendParams['PayfastMerchantKey'] = $PayfastMerchantKey }
         if ($SupabaseUrl) { $backendParams['SupabaseUrl'] = $SupabaseUrl }
         if ($SupabaseAnonKey) { $backendParams['SupabaseAnonKey'] = $SupabaseAnonKey }
         if ($SupabaseServiceRoleKey) { $backendParams['SupabaseServiceRoleKey'] = $SupabaseServiceRoleKey }
@@ -431,7 +370,7 @@ else {
 # ---------------------------
 # STEP 5: PAYMENT CONFIGURATION
 # ---------------------------
-if (-not $SkipPayments -and ($PaystackSecretKey -or $PayfastMerchantId)) {
+if (-not $SkipPayments -and $PaystackSecretKey) {
     Write-Banner "STEP 5: PAYMENT CONFIGURATION"
     $deploymentState.Payments.Status = "In Progress"
     
@@ -445,9 +384,6 @@ if (-not $SkipPayments -and ($PaystackSecretKey -or $PayfastMerchantId)) {
         }
         
         if ($PaystackSecretKey) { $paymentsParams['PaystackSecretKey'] = $PaystackSecretKey }
-        if ($PayfastMerchantId) { $paymentsParams['PayfastMerchantId'] = $PayfastMerchantId }
-        if ($PayfastMerchantKey) { $paymentsParams['PayfastMerchantKey'] = $PayfastMerchantKey }
-        if ($PayfastPassphrase) { $paymentsParams['PayfastPassphrase'] = $PayfastPassphrase }
         
         & "$scriptPath\configure-payments.ps1" @paymentsParams
         

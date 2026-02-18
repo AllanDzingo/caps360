@@ -1,7 +1,7 @@
 # =====================================================
 # CAPS360 Payment Integration Configuration Script
 # =====================================================
-# This script configures payment webhooks for Paystack and PayFast
+# This script configures payment webhooks for Paystack
 # Prerequisites:
 #   - Backend already deployed
 #   - Payment provider accounts configured
@@ -19,16 +19,7 @@ param(
     [string]$BackendUrl,
 
     [Parameter(Mandatory = $false)]
-    [string]$PaystackSecretKey,
-
-    [Parameter(Mandatory = $false)]
-    [string]$PayfastMerchantId,
-
-    [Parameter(Mandatory = $false)]
-    [string]$PayfastMerchantKey,
-
-    [Parameter(Mandatory = $false)]
-    [string]$PayfastPassphrase
+    [string]$PaystackSecretKey
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,21 +55,20 @@ function Write-Error-Custom {
 Write-Step "Step 1: Validating Webhook Endpoints"
 
 $paystackWebhookUrl = "$BackendUrl/api/payments/paystack/webhook"
-$payfastWebhookUrl = "$BackendUrl/api/payments/payfast/webhook"
-
 Write-Info "Paystack webhook URL: $paystackWebhookUrl"
-Write-Info "PayFast webhook URL: $payfastWebhookUrl"
 
 # Test that backend is accessible
 try {
     $healthCheck = Invoke-RestMethod -Uri "$BackendUrl/health" -Method Get -TimeoutSec 10
     if ($healthCheck.status -eq "healthy") {
         Write-Success "Backend is accessible"
-    } else {
+    }
+    else {
         Write-Error-Custom "Backend health check failed"
         exit 1
     }
-} catch {
+}
+catch {
     Write-Error-Custom "Cannot reach backend at $BackendUrl"
     exit 1
 }
@@ -106,7 +96,7 @@ if ($PaystackSecretKey) {
     try {
         $testPayload = @{
             event = "test.event"
-            data = @{
+            data  = @{
                 test = $true
             }
         } | ConvertTo-Json
@@ -122,53 +112,15 @@ if ($PaystackSecretKey) {
         if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 400) {
             Write-Success "Paystack webhook endpoint is responding"
         }
-    } catch {
+    }
+    catch {
         Write-Info "Webhook endpoint returned: $($_.Exception.Message)"
     }
-} else {
+}
+else {
     Write-Info "Skipping Paystack configuration (no secret key provided)"
 }
 
-# ---------------------------
-# Step 3: Configure PayFast Webhook
-# ---------------------------
-if ($PayfastMerchantId -and $PayfastMerchantKey) {
-    Write-Step "Step 3: Configuring PayFast Webhook"
-    
-    Write-Info "To configure PayFast webhook:"
-    Write-Host "1. Log in to https://www.payfast.co.za" -ForegroundColor White
-    Write-Host "2. Navigate to Settings > Integration" -ForegroundColor White
-    Write-Host "3. Set Instant Transaction Notification (ITN) URL:" -ForegroundColor White
-    Write-Host "   $payfastWebhookUrl" -ForegroundColor Yellow
-    Write-Host "4. Enable ITN for the following:" -ForegroundColor White
-    Write-Host "   - Payment Complete" -ForegroundColor White
-    Write-Host "   - Payment Failed" -ForegroundColor White
-    Write-Host "   - Subscription Created" -ForegroundColor White
-    Write-Host "   - Subscription Cancelled" -ForegroundColor White
-    Write-Host ""
-    
-    # Test webhook endpoint
-    Write-Info "Testing PayFast webhook endpoint..."
-    try {
-        $testPayload = "m_payment_id=test&pf_payment_id=test&payment_status=COMPLETE&item_name=Test"
-        
-        $response = Invoke-WebRequest `
-            -Uri $payfastWebhookUrl `
-            -Method Post `
-            -Body $testPayload `
-            -ContentType "application/x-www-form-urlencoded" `
-            -UseBasicParsing `
-            -TimeoutSec 10
-        
-        if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 400) {
-            Write-Success "PayFast webhook endpoint is responding"
-        }
-    } catch {
-        Write-Info "Webhook endpoint returned: $($_.Exception.Message)"
-    }
-} else {
-    Write-Info "Skipping PayFast configuration (no merchant credentials provided)"
-}
 
 # ---------------------------
 # Step 4: Update Backend Settings
@@ -179,15 +131,6 @@ $webAppName = "caps360-backend-$Environment"
 $appSettings = @()
 if ($PaystackSecretKey) {
     $appSettings += "PAYSTACK_SECRET_KEY=$PaystackSecretKey"
-}
-if ($PayfastMerchantId) {
-    $appSettings += "PAYFAST_MERCHANT_ID=$PayfastMerchantId"
-}
-if ($PayfastMerchantKey) {
-    $appSettings += "PAYFAST_MERCHANT_KEY=$PayfastMerchantKey"
-}
-if ($PayfastPassphrase) {
-    $appSettings += "PAYFAST_PASSPHRASE=$PayfastPassphrase"
 }
 
 if ($appSettings.Count -gt 0) {
@@ -216,7 +159,7 @@ if ($PaystackSecretKey) {
     Write-Info "Testing Paystack subscription initialization..."
     try {
         $testPayload = @{
-            tier = "standard"
+            tier          = "standard"
             billing_cycle = "monthly"
         } | ConvertTo-Json
         
@@ -228,32 +171,12 @@ if ($PaystackSecretKey) {
             -Headers @{ "Authorization" = "Bearer test-token" }
         
         Write-Success "Paystack initialization endpoint is working"
-    } catch {
+    }
+    catch {
         Write-Info "Paystack test requires valid authentication token"
     }
 }
 
-# Test PayFast initialization
-if ($PayfastMerchantId) {
-    Write-Info "Testing PayFast payment initialization..."
-    try {
-        $testPayload = @{
-            amount = 3900
-            item_name = "Study Help Subscription"
-        } | ConvertTo-Json
-        
-        $response = Invoke-RestMethod `
-            -Uri "$BackendUrl/api/payments/payfast/initialize" `
-            -Method Post `
-            -Body $testPayload `
-            -ContentType "application/json" `
-            -Headers @{ "Authorization" = "Bearer test-token" }
-        
-        Write-Success "PayFast initialization endpoint is working"
-    } catch {
-        Write-Info "PayFast test requires valid authentication token"
-    }
-}
 
 # ---------------------------
 # Step 6: Database Payment Records Check
@@ -276,18 +199,13 @@ Write-Step "Payment Configuration Summary"
 Write-Host ""
 Write-Host "Webhook URLs:" -ForegroundColor Cyan
 Write-Host "  Paystack: $paystackWebhookUrl" -ForegroundColor White
-Write-Host "  PayFast:  $payfastWebhookUrl" -ForegroundColor White
 Write-Host ""
 Write-Host "Configuration Status:" -ForegroundColor Cyan
 if ($PaystackSecretKey) {
     Write-Host "  ✓ Paystack configured" -ForegroundColor Green
-} else {
-    Write-Host "  ✗ Paystack not configured" -ForegroundColor Yellow
 }
-if ($PayfastMerchantId) {
-    Write-Host "  ✓ PayFast configured" -ForegroundColor Green
-} else {
-    Write-Host "  ✗ PayFast not configured" -ForegroundColor Yellow
+else {
+    Write-Host "  ✗ Paystack not configured" -ForegroundColor Yellow
 }
 Write-Host ""
 Write-Host "Next Steps:" -ForegroundColor Cyan
