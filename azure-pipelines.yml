@@ -70,6 +70,6 @@ stages:
                 - checkout: self
                 - task: AzureStaticWebApp@0
                   inputs:
-                    app_location: '$(frontendPath)/frontend-web'
+                    app_location: '$(frontendPath)'
                     output_location: '$(frontendPath)/dist'
                     azure_static_web_apps_api_token: '$(AZURE_STATIC_WEB_APPS_API_TOKEN)'
