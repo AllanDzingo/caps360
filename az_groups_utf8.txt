@@ -1,0 +1,6 @@
+﻿Name                        Location
+--------------------------  ----------------
+caps360                     southafricanorth
+DefaultResourceGroup-JNB    southafricanorth
+caps360-backend-prod_group  southafricanorth
+caps360-web-prod_group      westus2
