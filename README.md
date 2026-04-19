@@ -69,6 +69,43 @@ CAPS360 is a comprehensive South African educational platform designed to suppor
 
 > 📚 **See [GitHub Actions Guide](./docs/github-actions-guide.md) for complete CI/CD setup instructions**
 
+🏗️ Architecture & Scalability
+
+CAPS360 is designed using a modular, service-oriented architecture to support scalability and maintainability.
+
+Frontend (Web & Mobile): React (Vite) and React Native clients communicate with backend APIs over HTTPS
+Backend API: Stateless Node.js/Express services designed for horizontal scaling
+Database & Auth: Supabase for managed database and authentication
+Containerisation: Services are containerised using Docker for consistent environments
+Deployment: Hosted on Fly.io with support for scaling instances based on demand
+
+To support a growing user base (hundreds to thousands of concurrent users), the system is designed with:
+
+Stateless services enabling horizontal scaling
+Externalised configuration via environment variables
+Separation of concerns between frontend, backend, and services
+API-driven architecture to allow future microservices expansion
+
+⚙️ DevOps & Reliability
+
+The platform incorporates DevOps best practices to ensure reliable and repeatable deployments:
+
+CI/CD Pipelines: GitHub Actions used for automated testing, linting, security scanning, and deployment
+Environment Management: Secure handling of secrets via environment variables and Fly.io secrets
+Automated Deployments: Continuous deployment on code changes to ensure rapid iteration
+Testing Strategy: Includes unit, integration, and end-to-end testing across backend and frontend
+Observability (Planned/Expanding): Integration with monitoring tools (e.g., Prometheus/Grafana) for performance tracking and alerting
+
+👨‍💻 Engineering Ownership
+
+As the lead DevOps and Cloud Engineer on CAPS360, responsibilities include:
+
+Designing system architecture and infrastructure strategy
+Implementing CI/CD pipelines and deployment workflows
+Managing containerisation and service deployment
+Integrating third-party services (payments, AI APIs)
+Ensuring system scalability, reliability, and maintainability
+
 ## Project Structure
 
 ```text
